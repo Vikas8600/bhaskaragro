@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include bhaskaragro *.css
+recursive-include bhaskaragro *.csv
+recursive-include bhaskaragro *.html
+recursive-include bhaskaragro *.ico
+recursive-include bhaskaragro *.js
+recursive-include bhaskaragro *.json
+recursive-include bhaskaragro *.md
+recursive-include bhaskaragro *.png
+recursive-include bhaskaragro *.py
+recursive-include bhaskaragro *.svg
+recursive-include bhaskaragro *.txt
+recursive-exclude bhaskaragro *.pyc
