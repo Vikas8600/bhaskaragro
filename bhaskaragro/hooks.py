@@ -140,9 +140,9 @@ doctype_js = {"Journal Entry" : "public/js/journal_entry.js"}
 # exempt linked doctypes from being automatically cancelled
 #
 # auto_cancel_exempted_doctypes = ["Auto Repeat"]
-override_doctype_class = {
-	'Sales Invoice': 'bhaskaragro.sales_invoice.CustomSalesInvoice'
-}
+# override_doctype_class = {
+# 	'Sales Invoice': 'bhaskaragro.sales_invoice.CustomSalesInvoice'
+# }
 
 # User Data Protection
 # --------------------
