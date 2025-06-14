@@ -80,5 +80,5 @@ def set_batch_no(self,method):
         if i.serial_and_batch_bundle:
             doc=frappe.get_doc("Serial and Batch Bundle",i.serial_and_batch_bundle)
             for j in doc.entries:
-                self.db_set("batch_no",j.batch_no)
+                i.db_set("batch_no",j.batch_no)
         
