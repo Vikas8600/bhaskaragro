@@ -89,13 +89,11 @@ doctype_js = {"Journal Entry" : "public/js/journal_entry.js"}
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-#	}
-# }
+doc_events = {
+	"Serial and Batch Bundle": {
+		"before_save": "bhaskaragro.sales_invoice.batch_no",
+	}
+}
 
 # Scheduled Tasks
 # ---------------
