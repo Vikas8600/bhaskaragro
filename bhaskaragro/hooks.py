@@ -91,7 +91,7 @@ doctype_js = {"Journal Entry" : "public/js/journal_entry.js"}
 
 doc_events = {
 	"Serial and Batch Bundle": {
-		"before_save": "bhaskaragro.sales_invoice.batch_no",
+		"after_insert": "bhaskaragro.sales_invoice.batch_no",
 	}
 }
 

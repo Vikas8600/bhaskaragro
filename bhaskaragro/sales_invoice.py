@@ -40,7 +40,7 @@ class CustomSalesInvoice(SalesInvoice):
                         "credit_in_transaction_currency": flt(
                             self.write_off_amount, self.precision("write_off_amount")
                         ),
-                        "against_voucher": self.return_against if cint(self.is_return) else self.name,
+                        "against_voucher": self.return_against if frappe.cint(self.is_return) else self.name,
                         "against_voucher_type": self.doctype,
                         "cost_center": self.cost_center,
                         "project": self.project,
