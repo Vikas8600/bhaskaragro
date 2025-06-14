@@ -71,7 +71,14 @@ class CustomSalesInvoice(SalesInvoice):
             )
 
 
-def batch_no(self,method):
-    for j in self.entries:
-        frappe.db.set_value("Sales Invoice Item",self.voucher_detail_no,"batch_no",j.batch_no)
+# def batch_no(self,method):
+#     for j in self.entries:
+#         frappe.db.set_value("Sales Invoice Item",self.voucher_detail_no,"batch_no",j.batch_no)
 
+def set_batch_no(self,method):
+    for i in self.items:
+        if i.serial_and_batch_bundle:
+            doc=frappe.get_doc("Serial and Batch Bundle",i.serial_and_batch_bundle)
+            for j in doc.entries:
+                self.db_set("batch_no",j.batch_no)
+        

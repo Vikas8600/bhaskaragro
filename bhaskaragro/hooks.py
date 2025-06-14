@@ -90,8 +90,8 @@ doctype_js = {"Journal Entry" : "public/js/journal_entry.js"}
 # Hook on document methods and events
 
 doc_events = {
-	"Serial and Batch Bundle": {
-		"after_insert": "bhaskaragro.sales_invoice.batch_no",
+    "Sales Invoice": {
+		"after_insert": "bhaskaragro.sales_invoice.set_batch_no",
 	}
 }
 
