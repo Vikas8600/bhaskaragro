@@ -132,7 +132,7 @@ doc_events = {
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 override_doctype_dashboards = {
-	"Batch": "bhaskaragro.bhaskaragro.batch_dashboard"
+	"Batch": "bhaskaragro.bhaskaragro.batch_dashboard.get_dashboard_data"
 }
 
 # exempt linked doctypes from being automatically cancelled
