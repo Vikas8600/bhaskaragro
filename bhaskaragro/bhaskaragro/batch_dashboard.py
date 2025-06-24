@@ -1,7 +1,7 @@
 from frappe import _
 
 
-def get_data(data):
+def get_dashboard_data(data):
 	return {
 		"fieldname": "batch_no",
 		"transactions": [
