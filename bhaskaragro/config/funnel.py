@@ -1,21 +1,19 @@
+import base64
 import frappe
 from frappe.utils.pdf import get_pdf
-from frappe.utils.file_manager import save_file
 
-def attach_sales_order_pdf(so_name):
-    so = frappe.get_doc("Sales Order", so_name)
+@frappe.whitelist()
+def attach_pdf_base64(doc, method=None):
+    try:
+        pdf_content = get_pdf(frappe.get_print("Sales Order", doc.name, print_format="Sales Order Confirmation Format"))
 
-    pdf_content = get_pdf(
-        frappe.get_print(
-            "Sales Order",
-            so.name,
-            "Sales Order Confirmation Format",  
-            as_pdf=True
-        )
-    )
+        # Encode to base64
+        encoded_pdf = base64.b64encode(pdf_content).decode("utf-8")
 
-    # Save PDF file to the Sales Order's attachments
-    filename = f"{so.name}-Sales-Order-Confirmation.pdf"
-    save_file(filename, pdf_content, "Sales Order", so.name, is_private=0)
+        # Attach to custom fields
+        doc.custom_pdf_base64 = encoded_pdf
+        doc.custom_pdf_filename = f"{doc.name}.pdf"
+        doc.save(ignore_permissions=True)
 
-    return filename
+    except Exception as e:
+        frappe.log_error(f"Failed to generate PDF: {str(e)}", "Attach PDF Base64")
