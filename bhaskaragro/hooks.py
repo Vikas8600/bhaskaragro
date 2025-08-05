@@ -92,10 +92,7 @@ doctype_js = {"Journal Entry" : "public/js/journal_entry.js"}
 doc_events = {
     "Delivery Note": {
 		"after_insert": "bhaskaragro.sales_invoice.set_batch_no",
-	},
-    "Sales Order": {
-        "on_submit": "bhaskaragro.config.funnel.attach_pdf_base64"
-    }
+	}
 }
 
 
