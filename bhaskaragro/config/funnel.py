@@ -37,12 +37,16 @@
 #         return {"error": "Failed to generate PDF URL"}
 
 
+
 import frappe
-import requests
 from urllib.parse import urlencode
+from werkzeug.utils import redirect
 
 @frappe.whitelist(allow_guest=True)
 def send_pdf_url(variables=None):
+    """
+    Return a short PDF URL in variables["pdf_url"].
+    """
     try:
         if not variables or not variables.get("name"):
             frappe.throw("Document reference not provided in variables")
@@ -51,24 +55,14 @@ def send_pdf_url(variables=None):
         if not so_name:
             return {"error": "Missing Sales Order name"}
 
+        # Base site URL
         base_url = frappe.utils.get_url()
 
-        params = urlencode({
-            "doctype": "Sales Order",
-            "name": so_name.name,
-            "format": "Sales Order Confirmation Format",
-            "no_letterhead": 0
-        })
 
-        pdf_url = f"{base_url}/print?{params}"
+        # Short link that calls our own API
+        short_link = f"{base_url}/api/method/bhaskaragro.config.funnel.get_pdf?name={so_name.name}"
 
-        # Use TinyURL to shorten the link
-        tinyurl_api = "https://tinyurl.com/api-create.php"
-        response = requests.get(tinyurl_api, params={"url": pdf_url})
-
-        short_url = response.text if response.status_code == 200 else pdf_url
-
-        variables["pdf_url"] = short_url
+        variables["pdf_url"] = short_link
         return variables
 
     except Exception:
@@ -77,3 +71,23 @@ def send_pdf_url(variables=None):
             title="Error in send_pdf_url"
         )
         return {"error": "Failed to generate PDF URL"}
+
+
+@frappe.whitelist(allow_guest=True)
+def get_pdf(name):
+   
+    if not name:
+        frappe.throw("Sales Order name is required")
+
+    params = urlencode({
+        "doctype": "Sales Order",
+        "name": name,
+        "format": "Sales Order Confirmation Format",
+        "no_letterhead": 0,
+        "letterhead": "Hind Header",
+        "settings": "{}",
+        "_lang": "en"
+    })
+
+    long_url = f"/api/method/frappe.utils.print_format.download_pdf?{params}"
+    return redirect(long_url)  # Werkzeug redirect
