@@ -37,7 +37,7 @@
 #         return {"error": "Failed to generate PDF URL"}
 
 
-
+import frappe
 import requests
 from urllib.parse import urlencode
 
