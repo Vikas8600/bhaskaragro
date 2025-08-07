@@ -34,7 +34,7 @@ def send_pdf_url(variables=None):
 
 
 @frappe.whitelist(allow_guest=True)
-def send_pdf_url(variables=None):
+def send_pdf_url_invoice(variables=None):
     doc = variables.get("doc")
 
     si_name = frappe.get_doc("Sales Invoice", doc.name)
