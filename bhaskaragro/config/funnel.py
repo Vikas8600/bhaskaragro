@@ -60,3 +60,98 @@ def send_pdf_url_invoice(variables=None):
     short_url = response.text if response.status_code == 200 else pdf_url
 
     variables["pdf_url"] = short_url
+
+
+
+@frappe.whitelist(allow_guest=True)
+def send_pdf_url_po(variables=None):
+    doc = variables.get("doc")
+
+    po_name = frappe.get_doc("Purchase Order", doc.name)
+    if not po_name:
+        return {"error": "Missing Purchase Order name"}
+
+    base_url = frappe.utils.get_url()
+
+    params = urlencode({
+        "doctype": "Purchase Order",
+        "name": po_name.name,
+        "format": "Bhaskar PO",
+        "no_letterhead": 0,
+        "letterhead": "Bhaskar Agro Bellary New",
+    })
+
+    pdf_url = f"{base_url}/api/method/frappe.utils.print_format.download_pdf?{params}"
+
+    # Use TinyURL to shorten the link
+    tinyurl_api = "https://tinyurl.com/api-create.php"
+    response = requests.get(tinyurl_api, params={"url": pdf_url})
+
+    short_url = response.text if response.status_code == 200 else pdf_url
+
+    variables["pdf_url"] = short_url
+
+
+
+
+@frappe.whitelist(allow_guest=True)
+def send_pdf_url_pi(variables=None):
+    doc = variables.get("doc")
+
+    pi_name = frappe.get_doc("Purchase Invoice", doc.name)
+    if not pi_name:
+        return {"error": "Missing Purchase Invoice name"}
+
+    base_url = frappe.utils.get_url()
+
+    params = urlencode({
+        "doctype": "Purchase Invoice",
+        "name": pi_name.name,
+        "format": "Bhaskar Purchase Invoice Format",
+        "no_letterhead": 0,
+        "letterhead": "Bhaskar Agro Bellary New",
+    })
+
+    pdf_url = f"{base_url}/api/method/frappe.utils.print_format.download_pdf?{params}"
+
+    # Use TinyURL to shorten the link
+    tinyurl_api = "https://tinyurl.com/api-create.php"
+    response = requests.get(tinyurl_api, params={"url": pdf_url})
+
+    short_url = response.text if response.status_code == 200 else pdf_url
+
+    variables["pdf_url"] = short_url
+
+
+
+
+
+
+@frappe.whitelist(allow_guest=True)
+def send_pdf_url_ss(variables=None):
+    doc = variables.get("doc")
+
+    pi_name = frappe.get_doc("Salary Slip", doc.name)
+    if not pi_name:
+        return {"error": "Missing Salary Slip name"}
+
+    base_url = frappe.utils.get_url()
+
+    params = urlencode({
+        "doctype": "Salary Slip",
+        "name": pi_name.name,
+        "format": "New Bhaskara Salary Slip",
+        "no_letterhead": 0,
+        "letterhead": "Bhaskar Agro Bellary New",
+    })
+
+    pdf_url = f"{base_url}/api/method/frappe.utils.print_format.download_pdf?{params}"
+
+    # Use TinyURL to shorten the link
+    tinyurl_api = "https://tinyurl.com/api-create.php"
+    response = requests.get(tinyurl_api, params={"url": pdf_url})
+
+    short_url = response.text if response.status_code == 200 else pdf_url
+
+    variables["pdf_url"] = short_url
+
