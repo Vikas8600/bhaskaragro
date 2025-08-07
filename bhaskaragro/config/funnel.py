@@ -16,7 +16,7 @@ def send_pdf_url(variables=None):
         "doctype": "Sales Order",
         "name": so_name.name,
         "format": "Sales Order Confirmation Format",
-        "no_letterhead": 0
+        "no_letterhead": 0,
         "letterhead": "Bhaskar Agro Bellary New",
     })
 
@@ -47,7 +47,7 @@ def send_pdf_url(variables=None):
         "doctype": "Sales Invoice",
         "name": si_name.name,
         "format": "Sales Order Confirmation Format",
-        "no_letterhead": 0
+        "no_letterhead": 0,
         "letterhead": "Bhaskar Agro Bellary New",
     })
 
