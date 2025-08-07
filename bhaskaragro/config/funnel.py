@@ -19,7 +19,7 @@ def send_pdf_url(variables=None):
         "no_letterhead": 0
     })
 
-    pdf_url = f"{base_url}/print?{params}"
+    pdf_url = f"{base_url}/api/method/frappe.utils.print_format.download_pdf?{params}"
 
     # Use TinyURL to shorten the link
     tinyurl_api = "https://tinyurl.com/api-create.php"
