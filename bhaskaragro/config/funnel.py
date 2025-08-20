@@ -156,30 +156,33 @@ def send_pdf_url_ss(variables=None):
     variables["pdf_url"] = short_url
 
 
-
-    import frappe
-
 @frappe.whitelist()
 def get_sales_invoice_context(invoice_name):
     variables = {}
 
     si = frappe.get_doc("Sales Invoice", invoice_name)
 
-    variables["customer_name"] = si.customer
+    # Format important date fields as strings
+    variables["customer_name"] = si.customer_name
     variables["name"] = si.name
-    variables["posting_date"] = si.posting_date
+    variables["posting_date"] = si.posting_date.strftime("%Y-%m-%d") if si.posting_date else None
     variables["total"] = si.rounded_total
     variables["due_date"] = si.due_date.strftime("%Y-%m-%d") if si.due_date else None
     variables["company"] = si.company
-    variables["sales_person_1"] = "N/A"
-    variables["whatsapp_no_1"] = "N/A"
-    variables["sales_person_2"] = "N/A"
-    variables["whatsapp_no_2"] = "N/A"
-    variables["parent_sales_person"] = "N/A"
-    variables["parent_sales_person_whatsapp_no"] = "N/A"
+
+    # Defaults
+    variables.update({
+        "sales_person_1": "N/A",
+        "whatsapp_no_1": "N/A",
+        "sales_person_2": "N/A",
+        "whatsapp_no_2": "N/A",
+        "parent_sales_person": "N/A",
+        "parent_sales_person_whatsapp_no": "N/A"
+    })
 
     sales_team = si.get("sales_team", [])
 
+    # Sales Person 1
     if len(sales_team) > 0 and sales_team[0].sales_person:
         sp1_name = sales_team[0].sales_person
         try:
@@ -188,9 +191,10 @@ def get_sales_invoice_context(invoice_name):
 
             variables["sales_person_1"] = sp1_doc.name
             variables["whatsapp_no_1"] = (
-                emp1.cell_number or emp1.phone if emp1 and (emp1.cell_number or emp1.phone) else "N/A"
+                (emp1.cell_number or emp1.phone) if emp1 and (emp1.cell_number or emp1.phone) else "N/A"
             )
 
+            # Parent Sales Person
             if sp1_doc.parent_sales_person:
                 try:
                     parent_doc = frappe.get_doc("Sales Person", sp1_doc.parent_sales_person)
@@ -198,16 +202,18 @@ def get_sales_invoice_context(invoice_name):
 
                     variables["parent_sales_person"] = parent_doc.name
                     variables["parent_sales_person_whatsapp_no"] = (
-                        parent_emp.cell_number or parent_emp.phone
+                        (parent_emp.cell_number or parent_emp.phone)
                         if parent_emp and (parent_emp.cell_number or parent_emp.phone)
                         else "N/A"
                     )
 
                 except Exception as e:
                     frappe.log_error(f"Error fetching parent of {sp1_name}: {str(e)}", "Funnel Task")
+
         except Exception as e:
             frappe.log_error(f"Error processing Sales Person 1 ({sp1_name}): {str(e)}", "Funnel Task")
 
+    # Sales Person 2
     if len(sales_team) > 1 and sales_team[1].sales_person:
         sp2_name = sales_team[1].sales_person
         try:
@@ -216,19 +222,21 @@ def get_sales_invoice_context(invoice_name):
 
             variables["sales_person_2"] = sp2_doc.name
             variables["whatsapp_no_2"] = (
-                emp2.cell_number or emp2.phone if emp2 and (emp2.cell_number or emp2.phone) else "N/A"
+                (emp2.cell_number or emp2.phone) if emp2 and (emp2.cell_number or emp2.phone) else "N/A"
             )
 
         except Exception as e:
             frappe.log_error(f"Error processing Sales Person 2 ({sp2_name}): {str(e)}", "Funnel Task")
 
-    # Total unpaid
+    # Total unpaid (all invoices for the same customer that are unpaid)
     unpaid_total = frappe.db.sql(
         """
         SELECT SUM(outstanding_amount)
         FROM `tabSales Invoice`
-        WHERE customer = %s AND docstatus = 1
-          AND outstanding_amount > 0 AND status = "Unpaid"
+        WHERE customer = %s
+          AND docstatus = 1
+          AND outstanding_amount > 0
+          AND status = 'Unpaid'
         """,
         (si.customer,),
         as_list=True,
@@ -237,5 +245,3 @@ def get_sales_invoice_context(invoice_name):
     variables["total_unpaid"] = unpaid_total
 
     return variables
-
-
