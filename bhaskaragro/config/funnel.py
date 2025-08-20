@@ -1,6 +1,8 @@
 import frappe
 import requests
 from urllib.parse import urlencode
+import datetime
+
 
 @frappe.whitelist(allow_guest=True)
 def send_pdf_url(variables=None):
@@ -165,9 +167,9 @@ def get_sales_invoice_context(invoice_name):
     # Format important date fields as strings
     variables["customer_name"] = si.customer_name
     variables["name"] = si.name
-    variables["posting_date"] = si.posting_date.strftime("%Y-%m-%d") if si.posting_date else None
     variables["total"] = si.rounded_total
-    variables["due_date"] = si.due_date.strftime("%Y-%m-%d") if si.due_date else None
+    variables["posting_date"] = safe_date_format(si.posting_date)
+    variables["due_date"] = safe_date_format(si.due_date)
     variables["company"] = si.company
 
     # Defaults
@@ -245,3 +247,27 @@ def get_sales_invoice_context(invoice_name):
     variables["total_unpaid"] = unpaid_total
 
     return variables
+
+
+
+def safe_date_format(date_val):
+    """Return date as YYYY-MM-DD string, or None if invalid"""
+    if not date_val:
+        return None
+
+    # If already a datetime.date object
+    if isinstance(date_val, (datetime.date, datetime.datetime)):
+        return date_val.strftime("%Y-%m-%d")
+
+    # If string, try to parse
+    if isinstance(date_val, str):
+        for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y"):
+            try:
+                return datetime.datetime.strptime(date_val, fmt).strftime("%Y-%m-%d")
+            except ValueError:
+                continue
+        # If no format matched
+        frappe.log_error(f"Invalid date format: {date_val}", "Funnel Task")
+        return None
+
+    return None
