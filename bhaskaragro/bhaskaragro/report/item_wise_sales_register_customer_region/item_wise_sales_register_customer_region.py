@@ -65,7 +65,7 @@ def _execute(filters=None, additional_table_columns=None, additional_conditions=
 			delivery_note = d.parent
 		
 		if customer_record.customer_name:
-			c_name = frappe.db.get_value('Customer',customer_record.customer_name,'name')
+			c_name = frappe.db.get_value('Customer',{'customer_name':customer_record.customer_name},'name')
 			region = frappe.db.get_value('Customer',c_name,'custom_region')
 
 		row = {
