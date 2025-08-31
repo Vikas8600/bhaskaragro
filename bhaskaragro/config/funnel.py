@@ -48,7 +48,7 @@ def send_pdf_url_invoice(variables=None):
     params = urlencode({
         "doctype": "Sales Invoice",
         "name": si_name.name,
-        "format": "Sales Order Confirmation Format",
+        "format": "New Sales Bhaskara Format",
         "no_letterhead": 0,
         "letterhead": "Bhaskar Agro Bellary New",
     })
@@ -168,8 +168,8 @@ def get_sales_invoice_context(invoice_name):
     variables["customer_name"] = si.customer_name
     variables["name"] = si.name
     variables["total"] = si.rounded_total
-    variables["posting_date"] = safe_date_format(si.posting_date)
-    variables["due_date"] = safe_date_format(si.due_date)
+    variables["due_date"] = variables["due_date"] or datetime.date.today().strftime("%Y-%m-%d")
+    variables["posting_date"] = variables["posting_date"] or datetime.date.today().strftime("%Y-%m-%d")
     variables["company"] = si.company
 
     # Defaults
