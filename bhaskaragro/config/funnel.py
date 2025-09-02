@@ -1,6 +1,7 @@
 import frappe
 import requests
 from urllib.parse import urlencode
+from erpnext.accounts.utils import get_balance_on
 import datetime
 
 
@@ -31,6 +32,31 @@ def send_pdf_url(variables=None):
     short_url = response.text if response.status_code == 200 else pdf_url
 
     variables["pdf_url"] = short_url
+
+
+    
+@frappe.whitelist(allow_guest=True)
+def unpaid_amount(variables=None):
+    unpaid_total = get_balance_on(
+        party_type="Customer",
+        party=si.customer,
+        company=si.company
+    )
+
+    variables["total_unpaid"] = unpaid_total
+
+
+
+@frappe.whitelist(allow_guest=True)
+def unpaid_amount(customer, company):
+    si = frappe.get_doc("Sales Invoice", variables['doc']['name'])
+    unpaid_total = flt(get_balance_on(
+        party_type="Customer",
+        party= si.customer,
+        company=si.ompany
+    ))
+
+    return {"total_unpaid": unpaid_total}
 
 
 
