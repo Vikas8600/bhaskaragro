@@ -35,30 +35,20 @@ def send_pdf_url(variables=None):
 
 
     
+
 @frappe.whitelist(allow_guest=True)
-def unpaid_amount(variables=None):
-    unpaid_total = get_balance_on(
+def unpaid_amount(variables):
+   
+    si = frappe.get_doc("Sales Invoice", variables['doc']['name'])
+
+    unpaid_total = flt(get_balance_on(
         party_type="Customer",
         party=si.customer,
         company=si.company
-    )
-
-    variables["total_unpaid"] = unpaid_total
-
-
-
-@frappe.whitelist(allow_guest=True)
-def unpaid_amount(customer, company):
-    si = frappe.get_doc("Sales Invoice", variables['doc']['name'])
-    unpaid_total = flt(get_balance_on(
-        party_type="Customer",
-        party= si.customer,
-        company=si.ompany
     ))
 
-    return {"total_unpaid": unpaid_total}
-
-
+    variables["total_unpaid"] = unpaid_total
+    return variables
 
 
 @frappe.whitelist(allow_guest=True)
