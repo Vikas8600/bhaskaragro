@@ -1,6 +1,7 @@
 import frappe
 import requests
 from urllib.parse import urlencode
+from frappe.utils import flt
 from erpnext.accounts.utils import get_balance_on
 import datetime
 
@@ -38,7 +39,10 @@ def send_pdf_url(variables=None):
 
 @frappe.whitelist(allow_guest=True)
 def unpaid_amount(variables):
-   
+    """
+    Get net outstanding amount for the customer of a Sales Invoice.
+    `variables` is passed by Funnel Task engine.
+    """
     si = frappe.get_doc("Sales Invoice", variables['doc']['name'])
 
     unpaid_total = flt(get_balance_on(
