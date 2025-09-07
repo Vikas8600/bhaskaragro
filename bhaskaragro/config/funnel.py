@@ -129,7 +129,7 @@ def send_pdf_url_pi(variables=None):
     params = urlencode({
         "doctype": "Purchase Invoice",
         "name": pi_name.name,
-        "format": "Bhaskar Purchase Invoice Format",
+        "format": "Purchase Invoice Format",
         "no_letterhead": 0,
         "letterhead": "Bhaskar Agro Bellary New",
     })
