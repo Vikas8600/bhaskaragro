@@ -1,494 +1,169 @@
-import frappe
-import requests
-from urllib.parse import urlencode
-from frappe.utils import flt
-from erpnext.accounts.utils import get_balance_on
-import datetime
 
 
-@frappe.whitelist(allow_guest=True)
-def send_pdf_url(variables=None):
-    doc = variables.get("doc")
-
-    so_name = frappe.get_doc("Sales Order", doc.name)
-    if not so_name:
-        return {"error": "Missing Sales Order name"}
-
-    base_url = frappe.utils.get_url()
-
-    params = urlencode({
-        "doctype": "Sales Order",
-        "name": so_name.name,
-        "format": "Sales Order Confirmation Format",
-        "no_letterhead": 0,
-        "letterhead": "Bhaskar Agro Bellary New",
-    })
-
-    pdf_url = f"{base_url}/api/method/frappe.utils.print_format.download_pdf?{params}"
-
-    # Use TinyURL to shorten the link
-    tinyurl_api = "https://tinyurl.com/api-create.php"
-    response = requests.get(tinyurl_api, params={"url": pdf_url})
-
-    short_url = response.text if response.status_code == 200 else pdf_url
-
-    variables["pdf_url"] = short_url
-
-
-    
-
-@frappe.whitelist(allow_guest=True)
-def unpaid_amount(variables):
-    """
-    Get net outstanding amount for the customer of a Sales Invoice.
-    `variables` is passed by Funnel Task engine.
-    """
-    si = frappe.get_doc("Sales Invoice", variables['doc']['name'])
-
-    unpaid_total = flt(get_balance_on(
-        party_type="Customer",
-        party=si.customer,
-        company=si.company
-    ))
-
-    variables["total_unpaid"] = unpaid_total
-    return variables
-
-
-@frappe.whitelist(allow_guest=True)
-def send_pdf_url_invoice(variables=None):
-    doc = variables.get("doc")
-
-    si_name = frappe.get_doc("Sales Invoice", doc.name)
-    if not si_name:
-        return {"error": "Missing Sales Invoice name"}
-
-    base_url = frappe.utils.get_url()
-
-    params = urlencode({
-        "doctype": "Sales Invoice",
-        "name": si_name.name,
-        "format": "New Sales Bhaskara Format",
-        "no_letterhead": 0,
-        "letterhead": "Bhaskar Agro Bellary New",
-    })
-
-    pdf_url = f"{base_url}/api/method/frappe.utils.print_format.download_pdf?{params}"
-
-    # Use TinyURL to shorten the link
-    tinyurl_api = "https://tinyurl.com/api-create.php"
-    response = requests.get(tinyurl_api, params={"url": pdf_url})
-
-    short_url = response.text if response.status_code == 200 else pdf_url
-
-    variables["pdf_url"] = short_url
-
-
-
-@frappe.whitelist(allow_guest=True)
-def send_pdf_url_po(variables=None):
-    doc = variables.get("doc")
-
-    po_name = frappe.get_doc("Purchase Order", doc.name)
-    if not po_name:
-        return {"error": "Missing Purchase Order name"}
-
-    base_url = frappe.utils.get_url()
-
-    params = urlencode({
-        "doctype": "Purchase Order",
-        "name": po_name.name,
-        "format": "Bhaskar PO",
-        "no_letterhead": 0,
-        "letterhead": "Bhaskar Agro Bellary New",
-    })
-
-    pdf_url = f"{base_url}/api/method/frappe.utils.print_format.download_pdf?{params}"
-
-    # Use TinyURL to shorten the link
-    tinyurl_api = "https://tinyurl.com/api-create.php"
-    response = requests.get(tinyurl_api, params={"url": pdf_url})
-
-    short_url = response.text if response.status_code == 200 else pdf_url
-
-    variables["pdf_url"] = short_url
-
-
-
-
-@frappe.whitelist(allow_guest=True)
-def send_pdf_url_pi(variables=None):
-    doc = variables.get("doc")
-
-    pi_name = frappe.get_doc("Purchase Invoice", doc.name)
-    if not pi_name:
-        return {"error": "Missing Purchase Invoice name"}
-
-    base_url = frappe.utils.get_url()
-
-    params = urlencode({
-        "doctype": "Purchase Invoice",
-        "name": pi_name.name,
-        "format": "Purchase Invoice Format",
-        "no_letterhead": 0,
-        "letterhead": "Bhaskar Agro Bellary New",
-    })
-
-    pdf_url = f"{base_url}/api/method/frappe.utils.print_format.download_pdf?{params}"
-
-    # Use TinyURL to shorten the link
-    tinyurl_api = "https://tinyurl.com/api-create.php"
-    response = requests.get(tinyurl_api, params={"url": pdf_url})
-
-    short_url = response.text if response.status_code == 200 else pdf_url
-
-    variables["pdf_url"] = short_url
-
-
-
-
-
-
-@frappe.whitelist(allow_guest=True)
-def send_pdf_url_ss(variables=None):
-    doc = variables.get("doc")
-
-    pi_name = frappe.get_doc("Salary Slip", doc.name)
-    if not pi_name:
-        return {"error": "Missing Salary Slip name"}
-
-    base_url = frappe.utils.get_url()
-
-    params = urlencode({
-        "doctype": "Salary Slip",
-        "name": pi_name.name,
-        "format": "New Bhaskara Salary Slip",
-        "no_letterhead": 0,
-        "letterhead": "Bhaskar Agro Bellary New",
-    })
-
-    pdf_url = f"{base_url}/api/method/frappe.utils.print_format.download_pdf?{params}"
-
-    # Use TinyURL to shorten the link
-    tinyurl_api = "https://tinyurl.com/api-create.php"
-    response = requests.get(tinyurl_api, params={"url": pdf_url})
-
-    short_url = response.text if response.status_code == 200 else pdf_url
-
-    variables["pdf_url"] = short_url
-
-
-@frappe.whitelist()
-def get_sales_invoice_context(invoice_name):
-    variables = {}
-
-    si = frappe.get_doc("Sales Invoice", invoice_name)
-
-    # Format important date fields as strings
-    variables["customer_name"] = si.customer_name
-    variables["name"] = si.name
-    variables["total"] = si.rounded_total
-    variables["due_date"] = variables["due_date"] or datetime.date.today().strftime("%Y-%m-%d")
-    variables["posting_date"] = variables["posting_date"] or datetime.date.today().strftime("%Y-%m-%d")
-    variables["company"] = si.company
-
-    # Defaults
-    variables.update({
-        "sales_person_1": "N/A",
-        "whatsapp_no_1": "N/A",
-        "sales_person_2": "N/A",
-        "whatsapp_no_2": "N/A",
-        "parent_sales_person": "N/A",
-        "parent_sales_person_whatsapp_no": "N/A"
-    })
-
-    sales_team = si.get("sales_team", [])
-
-    # Sales Person 1
-    if len(sales_team) > 0 and sales_team[0].sales_person:
-        sp1_name = sales_team[0].sales_person
-        try:
-            sp1_doc = frappe.get_doc("Sales Person", sp1_name)
-            emp1 = frappe.get_doc("Employee", sp1_doc.employee) if sp1_doc.employee else None
-
-            variables["sales_person_1"] = sp1_doc.name
-            variables["whatsapp_no_1"] = (
-                (emp1.cell_number or emp1.phone) if emp1 and (emp1.cell_number or emp1.phone) else "N/A"
-            )
-
-            # Parent Sales Person
-            if sp1_doc.parent_sales_person:
-                try:
-                    parent_doc = frappe.get_doc("Sales Person", sp1_doc.parent_sales_person)
-                    parent_emp = frappe.get_doc("Employee", parent_doc.employee) if parent_doc.employee else None
-
-                    variables["parent_sales_person"] = parent_doc.name
-                    variables["parent_sales_person_whatsapp_no"] = (
-                        (parent_emp.cell_number or parent_emp.phone)
-                        if parent_emp and (parent_emp.cell_number or parent_emp.phone)
-                        else "N/A"
-                    )
-
-                except Exception as e:
-                    frappe.log_error(f"Error fetching parent of {sp1_name}: {str(e)}", "Funnel Task")
-
-        except Exception as e:
-            frappe.log_error(f"Error processing Sales Person 1 ({sp1_name}): {str(e)}", "Funnel Task")
-
-    # Sales Person 2
-    if len(sales_team) > 1 and sales_team[1].sales_person:
-        sp2_name = sales_team[1].sales_person
-        try:
-            sp2_doc = frappe.get_doc("Sales Person", sp2_name)
-            emp2 = frappe.get_doc("Employee", sp2_doc.employee) if sp2_doc.employee else None
-
-            variables["sales_person_2"] = sp2_doc.name
-            variables["whatsapp_no_2"] = (
-                (emp2.cell_number or emp2.phone) if emp2 and (emp2.cell_number or emp2.phone) else "N/A"
-            )
-
-        except Exception as e:
-            frappe.log_error(f"Error processing Sales Person 2 ({sp2_name}): {str(e)}", "Funnel Task")
-
-    # Total unpaid (all invoices for the same customer that are unpaid)
-    unpaid_total = frappe.db.sql(
-        """
-        SELECT SUM(outstanding_amount)
-        FROM `tabSales Invoice`
-        WHERE customer = %s
-          AND docstatus = 1
-          AND outstanding_amount > 0
-          AND status = 'Unpaid'
-        """,
-        (si.customer,),
-        as_list=True,
-    )[0][0] or 0
-
-    variables["total_unpaid"] = unpaid_total
-
-    return variables
-
-
-
-def safe_date_format(date_val):
-    """Return date as YYYY-MM-DD string, or None if invalid"""
-    if not date_val:
-        return None
-
-    # If already a datetime.date object
-    if isinstance(date_val, (datetime.date, datetime.datetime)):
-        return date_val.strftime("%Y-%m-%d")
-
-    # If string, try to parse
-    if isinstance(date_val, str):
-        for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y"):
-            try:
-                return datetime.datetime.strptime(date_val, fmt).strftime("%Y-%m-%d")
-            except ValueError:
-                continue
-        # If no format matched
-        frappe.log_error(f"Invalid date format: {date_val}", "Funnel Task")
-        return None
-
-    return None
-
+# File: your_custom_app/your_custom_app/overrides/sales_invoice.py
 
 import frappe
-import requests
-from urllib.parse import urlencode
-from frappe.utils import flt
-from erpnext.accounts.utils import get_balance_on
-import datetime
+from frappe import _
 
-
-@frappe.whitelist(allow_guest=True)
-def send_pdf_file(variables=None):
-    """Generate PDF file for Sales Order and save as File document"""
-    doc = variables.get("doc")
-
-    so_name = frappe.get_doc("Sales Order", doc.name)
-    if not so_name:
-        return {"error": "Missing Sales Order name"}
-
-    # Generate PDF content
-    pdf_content = frappe.get_print(
-        doctype="Sales Order",
-        name=so_name.name,
-        print_format="Sales Order Confirmation Format",
-        letterhead="Bhaskar Agro Bellary New",
-        as_pdf=True
-    )
+def generate_and_attach_invoice_pdf(doc):
+    """Generate and attach PDF of Sales Invoice after IRN generation."""
+    if not doc.irn:
+        return
     
-    # Create File document
-    file_name = f"SO-{so_name.name}.pdf"
-    file_doc = frappe.get_doc({
-        "doctype": "File",
-        "file_name": file_name,
-        "content": pdf_content,
-        "is_private": 0,
-        "attached_to_doctype": "Sales Order",
-        "attached_to_name": so_name.name
-    })
-    file_doc.insert(ignore_permissions=True)
-    
-    # Store the file name for WhatsApp attachment
-    variables["pdf_file"] = file_doc.name
-    return variables
+    try:
+        # Generate PDF with e-Invoice print format
+        pdf_data = frappe.get_print(
+            "Sales Invoice",
+            doc.name,
+            print_format="New Sales Bhaskara Format",
+            as_pdf=True
+        )
+        
+        file_name = f"{doc.name}-einvoice.pdf"
+        
+        # Delete old file if exists
+        existing_files = frappe.get_all(
+            "File",
+            filters={
+                "attached_to_doctype": "Sales Invoice",
+                "attached_to_name": doc.name,
+                "file_name": file_name
+            },
+            pluck="name"
+        )
+        
+        for existing_file in existing_files:
+            frappe.delete_doc("File", existing_file, ignore_permissions=True)
+        
+        # Create new file
+        file_doc = frappe.get_doc({
+            "doctype": "File",
+            "file_name": file_name,
+            "attached_to_doctype": "Sales Invoice",
+            "attached_to_name": doc.name,
+            "content": pdf_data,
+            "is_private": 0
+        })
+        file_doc.save(ignore_permissions=True)
+        
+        # Update custom_attachment field
+        frappe.db.set_value(
+            "Sales Invoice",
+            doc.name,
+            "custom_attachment",
+            file_doc.file_url,
+            update_modified=False
+        )
+        
+        frappe.logger().info(f"✅ Generated e-Invoice PDF for {doc.name}")
+        
+    except Exception as e:
+        frappe.log_error(
+            title=_("Failed to generate e-Invoice PDF for {0}").format(doc.name),
+            message=frappe.get_traceback()
+        )
 
 
-@frappe.whitelist(allow_guest=True)
-def unpaid_amount(variables):
+def after_irn_generated(doc, method=None):
     """
-    Get net outstanding amount for the customer of a Sales Invoice.
-    `variables` is passed by Funnel Task engine.
+    Called after IRN is generated and saved to database.
+    This runs in the background via queue.
     """
-    si = frappe.get_doc("Sales Invoice", variables['doc']['name'])
-
-    unpaid_total = flt(get_balance_on(
-        party_type="Customer",
-        party=si.customer,
-        company=si.company
-    ))
-
-    variables["total_unpaid"] = unpaid_total
-    return variables
-
-
-@frappe.whitelist(allow_guest=True)
-def send_pdf_file_invoice(variables=None):
-    """Generate PDF file for Sales Invoice and save as File document"""
-    doc = variables.get("doc")
-
-    si_name = frappe.get_doc("Sales Invoice", doc.name)
-    if not si_name:
-        return {"error": "Missing Sales Invoice name"}
-
-    # Generate PDF content
-    pdf_content = frappe.get_print(
-        doctype="Sales Invoice",
-        name=si_name.name,
-        print_format="New Sales Bhaskara Format",
-        letterhead="Bhaskar Agro Bellary New",
-        as_pdf=True
+    # Reload doc to get latest IRN value
+    doc.reload()
+    
+    if not doc.irn:
+        return
+    
+    # Generate PDF in background
+    frappe.enqueue(
+        generate_and_attach_invoice_pdf,
+        queue="short",
+        timeout=120,
+        doc=doc
     )
     
-    # Create File document
-    file_name = f"SI-{si_name.name}.pdf"
-    file_doc = frappe.get_doc({
-        "doctype": "File",
-        "file_name": file_name,
-        "content": pdf_content,
-        "is_private": 0,
-        "attached_to_doctype": "Sales Invoice",
-        "attached_to_name": si_name.name
-    })
-    file_doc.insert(ignore_permissions=True)
+# import frappe
+# from frappe import _
+
+
+# def generate_and_attach_invoice_pdf(doc):
+#     """
+#     Generate PDF of Sales Invoice with custom format and attach it to the document.
+#     This function is called after IRN generation.
+#     """
+#     # Only proceed if IRN exists
+#     if not doc.irn:
+#         return
     
-    # Store the file name for WhatsApp attachment
-    variables["pdf_file"] = file_doc.name
-    return variables
+#     try:
+#         # Generate PDF of Sales Invoice with custom format
+#         pdf_data = frappe.get_print(
+#             "Sales Invoice",
+#             doc.name,
+#             print_format="New Sales Bhaskara Format",
+#             as_pdf=True
+#         )
+        
+#         # Save file and attach to Sales Invoice
+#         file_name = f"{doc.name}-einvoice.pdf"
+        
+#         # Check if file already exists and delete it
+#         existing_files = frappe.get_all(
+#             "File",
+#             filters={
+#                 "attached_to_doctype": "Sales Invoice",
+#                 "attached_to_name": doc.name,
+#                 "file_name": file_name
+#             },
+#             pluck="name"
+#         )
+        
+#         for existing_file in existing_files:
+#             frappe.delete_doc("File", existing_file, ignore_permissions=True)
+        
+#         # Create new file
+#         file_doc = frappe.get_doc({
+#             "doctype": "File",
+#             "file_name": file_name,
+#             "attached_to_doctype": "Sales Invoice",
+#             "attached_to_name": doc.name,
+#             "content": pdf_data,
+#             "is_private": 0  # Set to 1 if you want it private
+#         })
+#         file_doc.save(ignore_permissions=True)
+        
+#         # Update custom_attachment field with file url
+#         doc.db_set("custom_attachment", file_doc.file_url, update_modified=False)
+        
+#         frappe.logger().info(f"PDF generated and attached for Sales Invoice {doc.name}")
+        
+#     except Exception as e:
+#         frappe.logger().error(f"Error generating PDF for Sales Invoice {doc.name}: {str(e)}")
+#         # Don't raise - we don't want to break the e-invoice flow
+#         frappe.log_error(
+#             title=_("Failed to generate PDF for Sales Invoice {0}").format(doc.name),
+#             message=frappe.get_traceback()
+#         )
 
 
-@frappe.whitelist(allow_guest=True)
-def send_pdf_file_po(variables=None):
-    """Generate PDF file for Purchase Order and save as File document"""
-    doc = variables.get("doc")
-
-    po_name = frappe.get_doc("Purchase Order", doc.name)
-    if not po_name:
-        return {"error": "Missing Purchase Order name"}
-
-    # Generate PDF content
-    pdf_content = frappe.get_print(
-        doctype="Purchase Order",
-        name=po_name.name,
-        print_format="Bhaskar PO",
-        letterhead="Bhaskar Agro Bellary New",
-        as_pdf=True
-    )
+# def on_update_after_submit(doc, method):
+#     """
+#     Hook function that triggers when Sales Invoice is updated after submit.
+#     This includes when IRN is set.
+#     """
+#     # Check if IRN was just added (comparing with DB value)
+#     db_irn = frappe.db.get_value("Sales Invoice", doc.name, "irn")
     
-    # Create File document
-    file_name = f"PO-{po_name.name}.pdf"
-    file_doc = frappe.get_doc({
-        "doctype": "File",
-        "file_name": file_name,
-        "content": pdf_content,
-        "is_private": 0,
-        "attached_to_doctype": "Purchase Order",
-        "attached_to_name": po_name.name
-    })
-    file_doc.insert(ignore_permissions=True)
-    
-    # Store the file name for WhatsApp attachment
-    variables["pdf_file"] = file_doc.name
-    return variables
-
-
-@frappe.whitelist(allow_guest=True)
-def send_pdf_file_pi(variables=None):
-    """Generate PDF file for Purchase Invoice and save as File document"""
-    doc = variables.get("doc")
-
-    pi_name = frappe.get_doc("Purchase Invoice", doc.name)
-    if not pi_name:
-        return {"error": "Missing Purchase Invoice name"}
-
-    # Generate PDF content
-    pdf_content = frappe.get_print(
-        doctype="Purchase Invoice",
-        name=pi_name.name,
-        print_format="Purchase Invoice Format",
-        letterhead="Bhaskar Agro Bellary New",
-        as_pdf=True
-    )
-    
-    # Create File document
-    file_name = f"PI-{pi_name.name}.pdf"
-    file_doc = frappe.get_doc({
-        "doctype": "File",
-        "file_name": file_name,
-        "content": pdf_content,
-        "is_private": 0,
-        "attached_to_doctype": "Purchase Invoice",
-        "attached_to_name": pi_name.name
-    })
-    file_doc.insert(ignore_permissions=True)
-    
-    # Store the file name for WhatsApp attachment
-    variables["pdf_file"] = file_doc.name
-    return variables
-
-
-@frappe.whitelist(allow_guest=True)
-def send_pdf_file_ss(variables=None):
-    """Generate PDF file for Salary Slip and save as File document"""
-    doc = variables.get("doc")
-
-    ss_name = frappe.get_doc("Salary Slip", doc.name)
-    if not ss_name:
-        return {"error": "Missing Salary Slip name"}
-
-    # Generate PDF content
-    pdf_content = frappe.get_print(
-        doctype="Salary Slip",
-        name=ss_name.name,
-        print_format="New Bhaskara Salary Slip",
-        letterhead="Bhaskar Agro Bellary New",
-        as_pdf=True
-    )
-    
-    # Create File document
-    file_name = f"SS-{ss_name.name}.pdf"
-    file_doc = frappe.get_doc({
-        "doctype": "File",
-        "file_name": file_name,
-        "content": pdf_content,
-        "is_private": 0,
-        "attached_to_doctype": "Salary Slip",
-        "attached_to_name": ss_name.name
-    })
-    file_doc.insert(ignore_permissions=True)
-    
-    # Store the file name for WhatsApp attachment
-    variables["pdf_file"] = file_doc.name
-    return variables
+#     # If IRN exists in current doc but process hasn't run yet
+#     if doc.irn and doc.irn == db_irn:
+#         # Check if attachment already exists
+#         existing_attachment = frappe.db.get_value(
+#             "Sales Invoice", 
+#             doc.name, 
+#             "custom_attachment"
+#         )
+        
+#         # Only generate if attachment doesn't exist
+#         if not existing_attachment:
+#             generate_and_attach_invoice_pdf(doc)

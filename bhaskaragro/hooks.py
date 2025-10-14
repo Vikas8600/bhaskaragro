@@ -92,8 +92,25 @@ doctype_js = {"Journal Entry" : "public/js/journal_entry.js"}
 doc_events = {
     "Delivery Note": {
 		"after_insert": "bhaskaragro.sales_invoice.set_batch_no",
-	}
+	},
+	#  "Sales Invoice": {
+    #     "on_update_after_submit": "bhaskaragro.bhaskaragro.config.funnel.on_update_after_submit",
+    # }
+	"Sales Invoice": {
+        "after_irn_generated": "bhaskaragro.bhaskaragro.config.funnel.after_irn_generated",
+    }
+	# "Leave Application": {
+	# 	"on_submit": "bhaskaragro.config.attendance.create_sandwich_attendance",
+	# }
 }
+
+
+# scheduler_events = {
+#     "weekly": [
+#         "bhaskaragro.config.attendance.check_sandwich_attendance"
+#     ]
+# }
+
 
 
 
