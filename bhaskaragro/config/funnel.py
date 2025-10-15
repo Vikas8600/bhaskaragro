@@ -81,3 +81,49 @@ def attach_missing_irn_pdfs():
     for name in invoices:
         doc = frappe.get_doc("Sales Invoice", name)
         attach_irn_pdf(doc)
+
+
+import frappe
+from frappe.utils import now_datetime, add_to_date
+
+@frappe.whitelist()
+def attach_sales_invoice_pdf_later(doc_name):
+    """
+    Enqueue a job to attach PDF 5 minutes later.
+    """
+    frappe.enqueue_in(
+        minutes=5,
+        queue="long",
+        job_name=f"attach_pdf_{doc_name}",
+        method="bhaskaragro.config.funnel._attach_sales_invoice_pdf",
+        doc_name=doc_name
+    )
+
+def _attach_sales_invoice_pdf(doc_name):
+    """
+    Actual function to generate PDF and attach to Sales Invoice.
+    """
+    doc = frappe.get_doc("Sales Invoice", doc_name)
+    
+    # Generate PDF
+    pdf_data = frappe.get_print(
+        "Sales Invoice",
+        doc.name,
+        print_format="New Sales Bhaskara Format",
+        as_pdf=True
+    )
+    
+    # Save file and attach
+    file_name = f"{doc.name}-confirmation.pdf"
+    file_doc = frappe.get_doc({
+        "doctype": "File",
+        "file_name": file_name,
+        "attached_to_doctype": "Sales Invoice",
+        "attached_to_name": doc.name,
+        "content": pdf_data
+    })
+    file_doc.save(ignore_permissions=True)
+    
+    # Update custom_attachment field
+    doc.db_set("custom_attachment", file_doc.file_url)
+    frappe.logger().info(f"PDF attached for Sales Invoice {doc_name}")

@@ -192,9 +192,9 @@ user_data_fields = [
 # 	"bhaskaragro.auth.validate"
 # ]
 
-scheduler_events = {
-    "cron": {
-        "*/2 * * * *": ["bhaskaragro.config.funnel.attach_missing_irn_pdfs"]
-    }
-}
+# scheduler_events = {
+#     "cron": {
+#         "*/2 * * * *": ["bhaskaragro.config.funnel.attach_missing_irn_pdfs"]
+#     }
+# }
 # apps/bhaskaragro/bhaskaragro/config/funnel.py
