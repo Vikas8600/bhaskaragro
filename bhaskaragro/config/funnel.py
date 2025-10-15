@@ -32,6 +32,7 @@ import frappe
 import base64
 from frappe.utils.file_manager import save_file, remove_file
 
+@frappe.whitelist()
 def attach_irn_pdf(doc):
     """
     Generate PDF of Sales Invoice and attach it to custom_attachment field.
@@ -65,6 +66,7 @@ def attach_irn_pdf(doc):
     except Exception as e:
         frappe.log_error(message=str(e), title=f"Attach IRN PDF - {doc.name}")
 
+@frappe.whitelist()
 def attach_missing_irn_pdfs():
     """
     Attach PDFs for all Sales Invoices with IRN but no attachment yet.
