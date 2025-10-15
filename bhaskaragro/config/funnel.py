@@ -74,7 +74,8 @@ def attach_missing_irn_pdfs():
     invoices = frappe.get_all(
         "Sales Invoice",
         filters={"irn": ["is", "set"], "custom_attachment": ["is", "not set"]},
-        pluck="name"
+        pluck="name",
+        limit=50 
     )
 
     for name in invoices:
