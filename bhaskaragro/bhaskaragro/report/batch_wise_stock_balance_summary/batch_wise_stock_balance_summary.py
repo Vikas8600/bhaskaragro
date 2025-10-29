@@ -104,20 +104,32 @@ def execute(filters=None):
 			d.insert(20,d[15])
 		else:
 			d.insert(20,0)
-			
+	
+	# columns.extend([
+	# 		# 'Item Weight:Float:100',
+	# 		'Brand:Data:150',
+	# 		# 'No Of Cases:Data:150',
+	# 		'Class:Data:150',
+	# 	])
+	for d in data:
+		item_info = frappe.get_value("Item", d[0], ["brand", "class"], as_dict=1) or {}
+		brand = item_info.get("brand", "")
+		item_class = item_info.get("class", "")
+		d.extend([brand, item_class])
+
+		# frappe.throw(str(d))
 	return columns, data
 
 
 def get_columns(filters):
 	"""return columns based on filters"""
 	
-
 	columns = [_("Item") + ":Link/Item:100"] + [_("Item Name") + "::150"] + [_("Description") + "::150"] + \
 		[_("Warehouse") + ":Link/Warehouse:100"] + [_("Batch") + ":Link/Batch:100"] + [_("Opening Qty") + ":Float:90"] + \
 		[_("In Qty") + ":Float:80"] + [_("Out Qty") + ":Float:80"] + [_("Balance Qty") + ":Float:90"] + \
 		[_("UOM") + "::90"] + [_("Manufacturing Date") + ":Date:110"] +[_("Expiry Date") + ":Date:110"] +\
 		[_("Shelf Life") + ":Int:100"] + [_("Lapsed Life") + ":Int:100"] + [_("Balanced Life") + ":Int:100"]+[_("Stock Value") + ":Currency:100"]+\
-		[_("0 - 30") + ":Currency:100"]
+		[_("Brand") + ":Data:150"] + [_("Class") + ":Data:150"] + [_("0 - 30") + ":Currency:100"] 
 	
 	if filters.get("range1") and filters.get("range2") and filters.get("range3") and filters.get("range4"):
 		columns.extend([_("{0} - {1}".format(filters.get("range1")+1,filters.get("range2"))) + ":Currency:100"])
