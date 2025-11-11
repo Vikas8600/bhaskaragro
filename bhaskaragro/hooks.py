@@ -192,9 +192,26 @@ user_data_fields = [
 # 	"bhaskaragro.auth.validate"
 # ]
 
+# scheduler_events = {
+#     "cron": {
+#         "*/2 * * * *": ["bhaskaragro.config.funnel.attach_missing_irn_pdfs"]
+#     }
+# }
+# apps/bhaskaragro/bhaskaragro/config/funnel.py
+
 scheduler_events = {
     "cron": {
-        "*/2 * * * *": ["bhaskaragro.config.funnel.attach_missing_irn_pdfs"]
-    }
+        "*/2 * * * *": [
+            "bhaskaragro.config.funnel.attach_missing_irn_pdfs"
+        ]
+    },
+	# "cron": {
+    #     "0 3 1 * *": [
+    #          "bhaskaragro.bhaskaragro.doctype.general_ledger_report.general_ledger_report.generate_monthly_general_ledger_reports"
+    #     ]
+    # }
+
+    "monthly": [
+        "bhaskaragro.bhaskaragro.doctype.general_ledger_report.general_ledger_report.create_general_ledger_reports"
+    ],
 }
-# apps/bhaskaragro/bhaskaragro/config/funnel.py
