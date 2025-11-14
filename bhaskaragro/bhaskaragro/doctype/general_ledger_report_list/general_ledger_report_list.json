@@ -1,7 +1,8 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2025-11-07 17:13:06.733529",
+ "autoname": "format:{customer}{month}-{YYYY}",
+ "creation": "2025-11-13 15:08:04.741173",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -31,11 +32,12 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-07 17:15:20.930555",
- "modified_by": "Administrator",
+ "modified": "2025-11-13 16:29:00.086167",
+ "modified_by": "dikepragati71@gmail.com",
  "module": "bhaskaragro",
- "name": "General Ledger Report",
- "owner": "Administrator",
+ "name": "General Ledger Report List",
+ "naming_rule": "Expression",
+ "owner": "dikepragati71@gmail.com",
  "permissions": [
   {
    "create": 1,
@@ -51,6 +53,7 @@
   }
  ],
  "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
