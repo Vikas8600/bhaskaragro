@@ -19,7 +19,7 @@ def generate_monthly_gl_reports():
             prev_month = 12
             prev_year = current_date.year - 1
         else:
-            prev_month = current_date.month 
+            prev_month = current_date.month -1
             prev_year = current_date.year
         
         # Get first and last day of previous month
@@ -434,570 +434,570 @@ def generate_and_store_gl_report(customer, customer_name, from_date, to_date, mo
 #     return html
 
 
-# def get_general_ledger_html(filters, customer, customer_name, month, year):
-#     """
-#     Generate HTML content for General Ledger report with enhanced formatting
-#     """
+def get_general_ledger_html(filters, customer, customer_name, month, year):
+    """
+    Generate HTML content for General Ledger report with enhanced formatting
+    """
 
-#     columns = []
-#     data = []
-#     method_used = "none"
+    columns = []
+    data = []
+    method_used = "none"
 
-#     frappe.logger().info(f"=== Fetching GL data for {customer_name} ===")
-#     frappe.logger().info(f"Filters: {filters}")
+    frappe.logger().info(f"=== Fetching GL data for {customer_name} ===")
+    frappe.logger().info(f"Filters: {filters}")
 
-#     # Method 1: Try standard report execution
-#     try:
-#         report = frappe.get_doc("Report", "General Ledger")
-#         execute_fn = frappe.get_attr(report.report_module + ".execute")
+    # Method 1: Try standard report execution
+    try:
+        report = frappe.get_doc("Report", "General Ledger")
+        execute_fn = frappe.get_attr(report.report_module + ".execute")
         
-#         # Try with party as list first
-#         columns, data = execute_fn(filters)
-#         method_used = "standard_list"
-#         frappe.logger().info(f"✓ Standard method (list): Fetched {len(data)} rows")
+        # Try with party as list first
+        columns, data = execute_fn(filters)
+        method_used = "standard_list"
+        frappe.logger().info(f"✓ Standard method (list): Fetched {len(data)} rows")
 
-#     except Exception as e:
-#         frappe.logger().error(f"✗ Error with standard method (list): {str(e)}")
+    except Exception as e:
+        frappe.logger().error(f"✗ Error with standard method (list): {str(e)}")
         
-#         # Try with party as string
-#         try:
-#             filters_copy = filters.copy()
-#             filters_copy["party"] = customer  # Try as string instead of list
-#             columns, data = execute_fn(filters_copy)
-#             method_used = "standard_string"
-#             frappe.logger().info(f"✓ Standard method (string): Fetched {len(data)} rows")
-#         except Exception as e2:
-#             frappe.logger().error(f"✗ Error with standard method (string): {str(e2)}")
+        # Try with party as string
+        try:
+            filters_copy = filters.copy()
+            filters_copy["party"] = customer  # Try as string instead of list
+            columns, data = execute_fn(filters_copy)
+            method_used = "standard_string"
+            frappe.logger().info(f"✓ Standard method (string): Fetched {len(data)} rows")
+        except Exception as e2:
+            frappe.logger().error(f"✗ Error with standard method (string): {str(e2)}")
 
-#     # Method 2: Direct database query if no data found
-#     if not data:
-#         frappe.logger().info(f"Attempting direct database query for customer: {customer}")
+    # Method 2: Direct database query if no data found
+    if not data:
+        frappe.logger().info(f"Attempting direct database query for customer: {customer}")
         
-#         try:
-#             # First check if any entries exist
-#             check_query = """
-#                 SELECT COUNT(*) as count
-#                 FROM `tabGL Entry`
-#                 WHERE party_type = 'Customer' 
-#                 AND party = %(party)s
-#             """
-#             total_count = frappe.db.sql(check_query, {'party': customer}, as_dict=1)
-#             frappe.logger().info(f"Total GL entries for {customer}: {total_count[0].get('count', 0)}")
+        try:
+            # First check if any entries exist
+            check_query = """
+                SELECT COUNT(*) as count
+                FROM `tabGL Entry`
+                WHERE party_type = 'Customer' 
+                AND party = %(party)s
+            """
+            total_count = frappe.db.sql(check_query, {'party': customer}, as_dict=1)
+            frappe.logger().info(f"Total GL entries for {customer}: {total_count[0].get('count', 0)}")
             
-#             # Check entries in date range
-#             date_check = """
-#                 SELECT COUNT(*) as count
-#                 FROM `tabGL Entry`
-#                 WHERE party_type = 'Customer' 
-#                 AND party = %(party)s
-#                 AND posting_date BETWEEN %(from_date)s AND %(to_date)s
-#             """
-#             range_count = frappe.db.sql(date_check, {
-#                 'party': customer,
-#                 'from_date': filters['from_date'],
-#                 'to_date': filters['to_date']
-#             }, as_dict=1)
-#             frappe.logger().info(f"GL entries in date range: {range_count[0].get('count', 0)}")
+            # Check entries in date range
+            date_check = """
+                SELECT COUNT(*) as count
+                FROM `tabGL Entry`
+                WHERE party_type = 'Customer' 
+                AND party = %(party)s
+                AND posting_date BETWEEN %(from_date)s AND %(to_date)s
+            """
+            range_count = frappe.db.sql(date_check, {
+                'party': customer,
+                'from_date': filters['from_date'],
+                'to_date': filters['to_date']
+            }, as_dict=1)
+            frappe.logger().info(f"GL entries in date range: {range_count[0].get('count', 0)}")
             
-#             # First, get opening balance (all entries before from_date)
-#             opening_balance_data = frappe.db.sql("""
-#                 SELECT 
-#                     SUM(debit) as opening_debit,
-#                     SUM(credit) as opening_credit
-#                 FROM `tabGL Entry`
-#                 WHERE 
-#                     company = %(company)s
-#                     AND posting_date < %(from_date)s
-#                     AND party_type = 'Customer'
-#                     AND party = %(party)s
-#                     AND is_cancelled = 0
-#             """, {
-#                 'company': filters['company'],
-#                 'from_date': filters['from_date'],
-#                 'party': customer
-#             }, as_dict=1)
+            # First, get opening balance (all entries before from_date)
+            opening_balance_data = frappe.db.sql("""
+                SELECT 
+                    SUM(debit) as opening_debit,
+                    SUM(credit) as opening_credit
+                FROM `tabGL Entry`
+                WHERE 
+                    company = %(company)s
+                    AND posting_date < %(from_date)s
+                    AND party_type = 'Customer'
+                    AND party = %(party)s
+                    AND is_cancelled = 0
+            """, {
+                'company': filters['company'],
+                'from_date': filters['from_date'],
+                'party': customer
+            }, as_dict=1)
             
-#             opening_debit = opening_balance_data[0].get('opening_debit', 0) or 0
-#             opening_credit = opening_balance_data[0].get('opening_credit', 0) or 0
-#             opening_balance = opening_debit - opening_credit
+            opening_debit = opening_balance_data[0].get('opening_debit', 0) or 0
+            opening_credit = opening_balance_data[0].get('opening_credit', 0) or 0
+            opening_balance = opening_debit - opening_credit
             
-#             frappe.logger().info(f"Opening Balance: Debit={opening_debit}, Credit={opening_credit}, Balance={opening_balance}")
+            frappe.logger().info(f"Opening Balance: Debit={opening_debit}, Credit={opening_credit}, Balance={opening_balance}")
             
-#             # Query GL entries directly
-#             gl_entries = frappe.db.sql("""
-#                 SELECT 
-#                     posting_date,
-#                     voucher_type,
-#                     voucher_no,
-#                     remarks,
-#                     debit,
-#                     credit
-#                 FROM `tabGL Entry`
-#                 WHERE 
-#                     company = %(company)s
-#                     AND posting_date BETWEEN %(from_date)s AND %(to_date)s
-#                     AND party_type = 'Customer'
-#                     AND party = %(party)s
-#                     AND is_cancelled = 0
-#                 ORDER BY posting_date, creation
-#             """, {
-#                 'company': filters['company'],
-#                 'from_date': filters['from_date'],
-#                 'to_date': filters['to_date'],
-#                 'party': customer
-#             }, as_dict=1)
+            # Query GL entries directly
+            gl_entries = frappe.db.sql("""
+                SELECT 
+                    posting_date,
+                    voucher_type,
+                    voucher_no,
+                    remarks,
+                    debit,
+                    credit
+                FROM `tabGL Entry`
+                WHERE 
+                    company = %(company)s
+                    AND posting_date BETWEEN %(from_date)s AND %(to_date)s
+                    AND party_type = 'Customer'
+                    AND party = %(party)s
+                    AND is_cancelled = 0
+                ORDER BY posting_date, creation
+            """, {
+                'company': filters['company'],
+                'from_date': filters['from_date'],
+                'to_date': filters['to_date'],
+                'party': customer
+            }, as_dict=1)
 
-#             if gl_entries or opening_balance != 0:
-#                 frappe.logger().info(f"✓ Direct query: Found {len(gl_entries)} entries")
-#                 method_used = "direct_query"
+            if gl_entries or opening_balance != 0:
+                frappe.logger().info(f"✓ Direct query: Found {len(gl_entries)} entries")
+                method_used = "direct_query"
                 
-#                 # Create columns for direct query - simplified columns
-#                 columns = [
-#                     {"label": "Date", "fieldname": "posting_date", "fieldtype": "Date", "width": "100px"},
-#                     {"label": "Reference", "fieldname": "voucher_no", "fieldtype": "Data", "width": "150px"},
-#                     {"label": "Remarks", "fieldname": "remarks", "fieldtype": "Text", "width": "250px"},
-#                     {"label": "Debit", "fieldname": "debit", "fieldtype": "Currency", "width": "120px"},
-#                     {"label": "Credit", "fieldname": "credit", "fieldtype": "Currency", "width": "120px"},
-#                     {"label": "Balance (Dr - Cr)", "fieldname": "balance", "fieldtype": "Currency", "width": "120px"}
-#                 ]
+                # Create columns for direct query - simplified columns
+                columns = [
+                    {"label": "Date", "fieldname": "posting_date", "fieldtype": "Date", "width": "100px"},
+                    {"label": "Reference", "fieldname": "voucher_no", "fieldtype": "Data", "width": "150px"},
+                    {"label": "Remarks", "fieldname": "remarks", "fieldtype": "Text", "width": "250px"},
+                    {"label": "Debit", "fieldname": "debit", "fieldtype": "Currency", "width": "120px"},
+                    {"label": "Credit", "fieldname": "credit", "fieldtype": "Currency", "width": "120px"},
+                    {"label": "Balance (Dr - Cr)", "fieldname": "balance", "fieldtype": "Currency", "width": "120px"}
+                ]
                 
-#                 data = []
+                data = []
                 
-#                 # Add opening balance row
-#                 data.append({
-#                     'posting_date': '',
-#                     'voucher_no': '',
-#                     'remarks': 'Opening Balance',
-#                     'debit': '',
-#                     'credit': opening_credit if opening_credit > 0 else '',
-#                     'balance': opening_balance,
-#                     'is_opening': True
-#                 })
+                # Add opening balance row
+                data.append({
+                    'posting_date': '',
+                    'voucher_no': '',
+                    'remarks': 'Opening Balance',
+                    'debit': '',
+                    'credit': opening_credit if opening_credit > 0 else '',
+                    'balance': opening_balance,
+                    'is_opening': True
+                })
                 
-#                 # Add GL entries with running balance
-#                 running_balance = opening_balance
-#                 for entry in gl_entries:
-#                     running_balance += (entry.get('debit', 0) - entry.get('credit', 0))
-#                     entry['balance'] = running_balance
-#                     data.append(entry)
+                # Add GL entries with running balance
+                running_balance = opening_balance
+                for entry in gl_entries:
+                    running_balance += (entry.get('debit', 0) - entry.get('credit', 0))
+                    entry['balance'] = running_balance
+                    data.append(entry)
 
-#             else:
-#                 frappe.logger().warning(f"✗ No GL entries found in direct query")
+            else:
+                frappe.logger().warning(f"✗ No GL entries found in direct query")
 
-#         except Exception as e:
-#             frappe.logger().error(f"✗ Error in direct query: {str(e)}")
-#             import traceback
-#             frappe.logger().error(traceback.format_exc())
+        except Exception as e:
+            frappe.logger().error(f"✗ Error in direct query: {str(e)}")
+            import traceback
+            frappe.logger().error(traceback.format_exc())
 
-#     if not data:
-#         frappe.logger().warning(f"No data available for {customer_name} in {month} {year}")
-#         return f"""
-#         <!DOCTYPE html>
-#         <html>
-#         <head>
-#             <meta charset="utf-8">
-#             <style>
-#                 body {{
-#                     font-family: 'Segoe UI', Arial, sans-serif;
-#                     padding: 40px;
-#                     color: #333;
-#                 }}
-#                 .header {{
-#                     text-align: center;
-#                     border-bottom: 3px solid #2c3e50;
-#                     padding-bottom: 20px;
-#                     margin-bottom: 30px;
-#                 }}
-#                 h1 {{
-#                     font-size: 24pt;
-#                     color: #2c3e50;
-#                     margin: 0 0 10px 0;
-#                 }}
-#                 h2 {{
-#                     font-size: 16pt;
-#                     color: #34495e;
-#                     margin: 5px 0;
-#                     font-weight: normal;
-#                 }}
-#                 .info-box {{
-#                     background: #f8f9fa;
-#                     border: 2px solid #dee2e6;
-#                     border-radius: 5px;
-#                     padding: 20px;
-#                     margin: 20px 0;
-#                 }}
-#                 .info-row {{
-#                     padding: 5px 0;
-#                     font-size: 11pt;
-#                 }}
-#                 .label {{
-#                     font-weight: bold;
-#                     color: #555;
-#                 }}
-#             </style>
-#         </head>
-#         <body>
-#             <div class="header">
-#                 <h1>General Ledger Report</h1>
-#                 <h2>{customer_name}</h2>
-#                 <p style="color: #7f8c8d; font-size: 11pt; margin: 10px 0 0 0;">
-#                     Period: {month} {year} ({filters['from_date']} to {filters['to_date']})
-#                 </p>
-#             </div>
+    if not data:
+        frappe.logger().warning(f"No data available for {customer_name} in {month} {year}")
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    padding: 40px;
+                    color: #333;
+                }}
+                .header {{
+                    text-align: center;
+                    border-bottom: 3px solid #2c3e50;
+                    padding-bottom: 20px;
+                    margin-bottom: 30px;
+                }}
+                h1 {{
+                    font-size: 24pt;
+                    color: #2c3e50;
+                    margin: 0 0 10px 0;
+                }}
+                h2 {{
+                    font-size: 16pt;
+                    color: #34495e;
+                    margin: 5px 0;
+                    font-weight: normal;
+                }}
+                .info-box {{
+                    background: #f8f9fa;
+                    border: 2px solid #dee2e6;
+                    border-radius: 5px;
+                    padding: 20px;
+                    margin: 20px 0;
+                }}
+                .info-row {{
+                    padding: 5px 0;
+                    font-size: 11pt;
+                }}
+                .label {{
+                    font-weight: bold;
+                    color: #555;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>General Ledger Report</h1>
+                <h2>{customer_name}</h2>
+                <p style="color: #7f8c8d; font-size: 11pt; margin: 10px 0 0 0;">
+                    Period: {month} {year} ({filters['from_date']} to {filters['to_date']})
+                </p>
+            </div>
             
-#             <div class="info-box">
-#                 <div class="info-row"><span class="label">Status:</span> No transactions found</div>
-#                 <div class="info-row"><span class="label">Customer ID:</span> {customer}</div>
-#                 <div class="info-row"><span class="label">Company:</span> {filters['company']}</div>
-#                 <div class="info-row"><span class="label">Date Range:</span> {filters['from_date']} to {filters['to_date']}</div>
-#             </div>
+            <div class="info-box">
+                <div class="info-row"><span class="label">Status:</span> No transactions found</div>
+                <div class="info-row"><span class="label">Customer ID:</span> {customer}</div>
+                <div class="info-row"><span class="label">Company:</span> {filters['company']}</div>
+                <div class="info-row"><span class="label">Date Range:</span> {filters['from_date']} to {filters['to_date']}</div>
+            </div>
             
-#             <p style="text-align: center; color: #7f8c8d; font-style: italic; margin-top: 30px;">
-#                 No General Ledger entries found for this customer in the specified period.
-#             </p>
-#         </body>
-#         </html>
-#         """
+            <p style="text-align: center; color: #7f8c8d; font-style: italic; margin-top: 30px;">
+                No General Ledger entries found for this customer in the specified period.
+            </p>
+        </body>
+        </html>
+        """
 
-#     # Calculate totals
-#     total_debit = 0
-#     total_credit = 0
-#     opening_balance = 0
-#     closing_balance = 0
+    # Calculate totals
+    total_debit = 0
+    total_credit = 0
+    opening_balance = 0
+    closing_balance = 0
     
-#     for row in data:
-#         if isinstance(row, dict):
-#             if row.get('is_opening'):
-#                 opening_balance = float(row.get('balance', 0) or 0)
-#             else:
-#                 total_debit += float(row.get('debit', 0) or 0)
-#                 total_credit += float(row.get('credit', 0) or 0)
-#                 closing_balance = float(row.get('balance', 0) or 0)
+    for row in data:
+        if isinstance(row, dict):
+            if row.get('is_opening'):
+                opening_balance = float(row.get('balance', 0) or 0)
+            else:
+                total_debit += float(row.get('debit', 0) or 0)
+                total_credit += float(row.get('credit', 0) or 0)
+                closing_balance = float(row.get('balance', 0) or 0)
 
-#     # Build Enhanced HTML with professional styling
-#     html = f"""
-#     <!DOCTYPE html>
-#     <html>
-#     <head>
-#         <meta charset="utf-8">
-#         <style>
-#             @page {{
-#                 size: A4 landscape;
-#                 margin: 15mm;
-#             }}
+    # Build Enhanced HTML with professional styling
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            @page {{
+                size: A4 landscape;
+                margin: 15mm;
+            }}
             
-#             body {{
-#                 font-family: 'Segoe UI', Arial, sans-serif;
-#                 font-size: 9pt;
-#                 margin: 0;
-#                 padding: 20px;
-#                 color: #333;
-#             }}
+            body {{
+                font-family: 'Segoe UI', Arial, sans-serif;
+                font-size: 9pt;
+                margin: 0;
+                padding: 20px;
+                color: #333;
+            }}
             
-#             .header {{
-#                 text-align: center;
-#                 border-bottom: 3px solid #2c3e50;
-#                 padding-bottom: 15px;
-#                 margin-bottom: 20px;
-#             }}
+            .header {{
+                text-align: center;
+                border-bottom: 3px solid #2c3e50;
+                padding-bottom: 15px;
+                margin-bottom: 20px;
+            }}
             
-#             .report-title {{
-#                 font-size: 20pt;
-#                 font-weight: bold;
-#                 color: #2c3e50;
-#                 margin: 0 0 8px 0;
-#             }}
+            .report-title {{
+                font-size: 20pt;
+                font-weight: bold;
+                color: #2c3e50;
+                margin: 0 0 8px 0;
+            }}
             
-#             .customer-name {{
-#                 font-size: 14pt;
-#                 color: #34495e;
-#                 margin: 5px 0;
-#                 font-weight: 600;
-#             }}
+            .customer-name {{
+                font-size: 14pt;
+                color: #34495e;
+                margin: 5px 0;
+                font-weight: 600;
+            }}
             
-#             .period-info {{
-#                 font-size: 10pt;
-#                 color: #7f8c8d;
-#                 margin-top: 8px;
-#             }}
+            .period-info {{
+                font-size: 10pt;
+                color: #7f8c8d;
+                margin-top: 8px;
+            }}
             
-#             .report-info {{
-#                 background: #f8f9fa;
-#                 padding: 10px 15px;
-#                 margin-bottom: 15px;
-#                 border-left: 4px solid #3498db;
-#                 font-size: 9pt;
-#             }}
+            .report-info {{
+                background: #f8f9fa;
+                padding: 10px 15px;
+                margin-bottom: 15px;
+                border-left: 4px solid #3498db;
+                font-size: 9pt;
+            }}
             
-#             .report-info-row {{
-#                 display: inline-block;
-#                 margin-right: 30px;
-#             }}
+            .report-info-row {{
+                display: inline-block;
+                margin-right: 30px;
+            }}
             
-#             .report-info-label {{
-#                 font-weight: bold;
-#                 color: #555;
-#             }}
+            .report-info-label {{
+                font-weight: bold;
+                color: #555;
+            }}
             
-#             table {{
-#                 width: 100%;
-#                 border-collapse: collapse;
-#                 margin-top: 10px;
-#                 font-size: 9pt;
-#             }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+                font-size: 9pt;
+            }}
             
-#             thead {{
-#                 background: linear-gradient(to bottom, #34495e 0%, #2c3e50 100%);
-#                 color: white;
-#             }}
+            thead {{
+                background: linear-gradient(to bottom, #34495e 0%, #2c3e50 100%);
+                color: white;
+            }}
             
-#             th {{
-#                 padding: 10px 8px;
-#                 text-align: left;
-#                 font-weight: 600;
-#                 border: 1px solid #2c3e50;
-#                 font-size: 9pt;
-#                 white-space: nowrap;
-#             }}
+            th {{
+                padding: 10px 8px;
+                text-align: left;
+                font-weight: 600;
+                border: 1px solid #2c3e50;
+                font-size: 9pt;
+                white-space: nowrap;
+            }}
             
-#             th.col-date {{
-#                 width: 100px;
-#             }}
+            th.col-date {{
+                width: 100px;
+            }}
             
-#             th.col-reference {{
-#                 width: 150px;
-#             }}
+            th.col-reference {{
+                width: 150px;
+            }}
             
-#             th.col-remarks {{
-#                 width: auto;
-#                 min-width: 200px;
-#             }}
+            th.col-remarks {{
+                width: auto;
+                min-width: 200px;
+            }}
             
-#             th.col-debit,
-#             th.col-credit,
-#             th.col-balance {{
-#                 width: 120px;
-#                 text-align: right;
-#             }}
+            th.col-debit,
+            th.col-credit,
+            th.col-balance {{
+                width: 120px;
+                text-align: right;
+            }}
             
-#             td {{
-#                 padding: 8px;
-#                 border: 1px solid #ddd;
-#                 vertical-align: top;
-#             }}
+            td {{
+                padding: 8px;
+                border: 1px solid #ddd;
+                vertical-align: top;
+            }}
             
-#             tbody tr:nth-child(odd) {{
-#                 background-color: #ffffff;
-#             }}
+            tbody tr:nth-child(odd) {{
+                background-color: #ffffff;
+            }}
             
-#             tbody tr:nth-child(even) {{
-#                 background-color: #f8f9fa;
-#             }}
+            tbody tr:nth-child(even) {{
+                background-color: #f8f9fa;
+            }}
             
-#             tbody tr:hover {{
-#                 background-color: #e8f4f8;
-#             }}
+            tbody tr:hover {{
+                background-color: #e8f4f8;
+            }}
             
-#             .number {{
-#                 text-align: right;
-#                 font-family: 'Courier New', monospace;
-#                 font-weight: 500;
-#             }}
+            .number {{
+                text-align: right;
+                font-family: 'Courier New', monospace;
+                font-weight: 500;
+            }}
             
-#             .date {{
-#                 white-space: nowrap;
-#                 font-weight: 500;
-#             }}
+            .date {{
+                white-space: nowrap;
+                font-weight: 500;
+            }}
             
-#             .opening-row {{
-#                 background: #fff3cd !important;
-#                 font-weight: bold;
-#                 border-bottom: 2px solid #ffc107 !important;
-#             }}
+            .opening-row {{
+                background: #fff3cd !important;
+                font-weight: bold;
+                border-bottom: 2px solid #ffc107 !important;
+            }}
             
-#             .opening-row td {{
-#                 padding: 10px 8px;
-#                 font-style: italic;
-#             }}
+            .opening-row td {{
+                padding: 10px 8px;
+                font-style: italic;
+            }}
             
-#             .total-row {{
-#                 background: #ecf0f1 !important;
-#                 font-weight: bold;
-#                 border-top: 2px solid #2c3e50 !important;
-#                 border-bottom: 2px solid #2c3e50 !important;
-#             }}
+            .total-row {{
+                background: #ecf0f1 !important;
+                font-weight: bold;
+                border-top: 2px solid #2c3e50 !important;
+                border-bottom: 2px solid #2c3e50 !important;
+            }}
             
-#             .total-row td {{
-#                 padding: 10px 8px;
-#                 font-size: 10pt;
-#             }}
+            .total-row td {{
+                padding: 10px 8px;
+                font-size: 10pt;
+            }}
             
-#             .closing-row {{
-#                 background: #d4edda !important;
-#                 font-weight: bold;
-#                 border-top: 2px solid #28a745 !important;
-#             }}
+            .closing-row {{
+                background: #d4edda !important;
+                font-weight: bold;
+                border-top: 2px solid #28a745 !important;
+            }}
             
-#             .closing-row td {{
-#                 padding: 10px 8px;
-#                 font-size: 10pt;
-#             }}
+            .closing-row td {{
+                padding: 10px 8px;
+                font-size: 10pt;
+            }}
             
-#             .footer {{
-#                 margin-top: 20px;
-#                 padding-top: 15px;
-#                 border-top: 2px solid #ecf0f1;
-#                 font-size: 8pt;
-#                 color: #95a5a6;
-#                 display: flex;
-#                 justify-content: space-between;
-#             }}
+            .footer {{
+                margin-top: 20px;
+                padding-top: 15px;
+                border-top: 2px solid #ecf0f1;
+                font-size: 8pt;
+                color: #95a5a6;
+                display: flex;
+                justify-content: space-between;
+            }}
             
-#             .footer-left, .footer-right {{
-#                 display: inline-block;
-#             }}
+            .footer-left, .footer-right {{
+                display: inline-block;
+            }}
             
-#             .no-data {{
-#                 text-align: center;
-#                 padding: 30px;
-#                 color: #7f8c8d;
-#                 font-style: italic;
-#             }}
-#         </style>
-#     </head>
-#     <body>
-#         <div class="header">
-#             <div class="report-title">General Ledger Report</div>
-#             <div class="customer-name">{customer_name}</div>
-#             <div class="period-info">{month} {year} | {filters['from_date']} to {filters['to_date']}</div>
-#         </div>
+            .no-data {{
+                text-align: center;
+                padding: 30px;
+                color: #7f8c8d;
+                font-style: italic;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div class="report-title">General Ledger Report</div>
+            <div class="customer-name">{customer_name}</div>
+            <div class="period-info">{month} {year} | {filters['from_date']} to {filters['to_date']}</div>
+        </div>
         
-#         <div class="report-info">
-#             <span class="report-info-row">
-#                 <span class="report-info-label">Company:</span> {filters['company']}
-#             </span>
-#             <span class="report-info-row">
-#                 <span class="report-info-label">Customer ID:</span> {customer}
-#             </span>
-#             <span class="report-info-row">
-#                 <span class="report-info-label">Report Date:</span> {today()}
-#             </span>
-#         </div>
+        <div class="report-info">
+            <span class="report-info-row">
+                <span class="report-info-label">Company:</span> {filters['company']}
+            </span>
+            <span class="report-info-row">
+                <span class="report-info-label">Customer ID:</span> {customer}
+            </span>
+            <span class="report-info-row">
+                <span class="report-info-label">Report Date:</span> {today()}
+            </span>
+        </div>
         
-#         <table>
-#             <thead>
-#                 <tr>
-#     """
+        <table>
+            <thead>
+                <tr>
+    """
 
-#     # Add column headers with specific classes
-#     col_class_map = {
-#         'Date': 'col-date',
-#         'Reference': 'col-reference', 
-#         'Remarks': 'col-remarks',
-#         'Debit': 'col-debit',
-#         'Credit': 'col-credit',
-#         'Balance (Dr - Cr)': 'col-balance'
-#     }
+    # Add column headers with specific classes
+    col_class_map = {
+        'Date': 'col-date',
+        'Reference': 'col-reference', 
+        'Remarks': 'col-remarks',
+        'Debit': 'col-debit',
+        'Credit': 'col-credit',
+        'Balance (Dr - Cr)': 'col-balance'
+    }
     
-#     for col in columns:
-#         col_label = col.get('label', '')
-#         col_class = col_class_map.get(col_label, '')
-#         align_class = 'style="text-align: right;"' if col.get('fieldtype') in ['Currency', 'Float', 'Int'] else ''
-#         html += f"<th class='{col_class}' {align_class}>{col_label}</th>"
+    for col in columns:
+        col_label = col.get('label', '')
+        col_class = col_class_map.get(col_label, '')
+        align_class = 'style="text-align: right;"' if col.get('fieldtype') in ['Currency', 'Float', 'Int'] else ''
+        html += f"<th class='{col_class}' {align_class}>{col_label}</th>"
 
-#     html += "</tr></thead><tbody>"
+    html += "</tr></thead><tbody>"
 
-#     # Add data rows
-#     for row in data:
-#         is_total_row = isinstance(row, dict) and row.get('is_total_row', False)
-#         is_opening_row = isinstance(row, dict) and row.get('is_opening', False)
+    # Add data rows
+    for row in data:
+        is_total_row = isinstance(row, dict) and row.get('is_total_row', False)
+        is_opening_row = isinstance(row, dict) and row.get('is_opening', False)
         
-#         row_class = ''
-#         if is_total_row:
-#             row_class = ' class="total-row"'
-#         elif is_opening_row:
-#             row_class = ' class="opening-row"'
+        row_class = ''
+        if is_total_row:
+            row_class = ' class="total-row"'
+        elif is_opening_row:
+            row_class = ' class="opening-row"'
             
-#         html += f"<tr{row_class}>"
+        html += f"<tr{row_class}>"
 
-#         for i, col in enumerate(columns):
-#             fieldname = col.get('fieldname')
-#             fieldtype = col.get('fieldtype')
-#             cell_value = ""
+        for i, col in enumerate(columns):
+            fieldname = col.get('fieldname')
+            fieldtype = col.get('fieldtype')
+            cell_value = ""
             
-#             if isinstance(row, (list, tuple)):
-#                 if i < len(row):
-#                     cell_value = row[i]
-#             elif isinstance(row, dict):
-#                 cell_value = row.get(fieldname, '')
+            if isinstance(row, (list, tuple)):
+                if i < len(row):
+                    cell_value = row[i]
+            elif isinstance(row, dict):
+                cell_value = row.get(fieldname, '')
 
-#             # Determine cell class
-#             cell_classes = []
-#             if fieldtype in ['Currency', 'Float', 'Int']:
-#                 cell_classes.append('number')
-#             if fieldtype == 'Date':
-#                 cell_classes.append('date')
+            # Determine cell class
+            cell_classes = []
+            if fieldtype in ['Currency', 'Float', 'Int']:
+                cell_classes.append('number')
+            if fieldtype == 'Date':
+                cell_classes.append('date')
             
-#             cell_class = f' class="{" ".join(cell_classes)}"' if cell_classes else ''
+            cell_class = f' class="{" ".join(cell_classes)}"' if cell_classes else ''
 
-#             # Format cell value
-#             if fieldtype == 'Currency' and cell_value not in ['', None]:
-#                 try:
-#                     cell_value = f"{float(cell_value):,.2f}"
-#                 except:
-#                     cell_value = ""
-#             elif fieldtype in ['Float', 'Int'] and cell_value:
-#                 try:
-#                     cell_value = f"{float(cell_value):,.2f}"
-#                 except:
-#                     pass
-#             elif fieldtype == 'Date' and cell_value:
-#                 try:
-#                     from frappe.utils import formatdate
-#                     cell_value = formatdate(cell_value)
-#                 except:
-#                     cell_value = str(cell_value)
+            # Format cell value
+            if fieldtype == 'Currency' and cell_value not in ['', None]:
+                try:
+                    cell_value = f"{float(cell_value):,.2f}"
+                except:
+                    cell_value = ""
+            elif fieldtype in ['Float', 'Int'] and cell_value:
+                try:
+                    cell_value = f"{float(cell_value):,.2f}"
+                except:
+                    pass
+            elif fieldtype == 'Date' and cell_value:
+                try:
+                    from frappe.utils import formatdate
+                    cell_value = formatdate(cell_value)
+                except:
+                    cell_value = str(cell_value)
 
-#             # Handle empty values
-#             display_value = cell_value if cell_value not in ['', None] else ''
-#             html += f"<td{cell_class}>{display_value}</td>"
+            # Handle empty values
+            display_value = cell_value if cell_value not in ['', None] else ''
+            html += f"<td{cell_class}>{display_value}</td>"
 
-#         html += "</tr>"
+        html += "</tr>"
 
-#     # Add total row
-#     html += f"""
-#                 <tr class="total-row">
-#                     <td colspan="3" style="text-align: right; font-weight: bold;">TOTAL</td>
-#                     <td class="number">{total_debit:,.2f}</td>
-#                     <td class="number">{total_credit:,.2f}</td>
-#                     <td class="number"></td>
-#                 </tr>
-#                 <tr class="closing-row">
-#                     <td colspan="3" style="text-align: right; font-weight: bold;">CLOSING BALANCE</td>
-#                     <td class="number"></td>
-#                     <td class="number"></td>
-#                     <td class="number">{closing_balance:,.2f}</td>
-#                 </tr>
-#     """
+    # Add total row
+    html += f"""
+                <tr class="total-row">
+                    <td colspan="3" style="text-align: right; font-weight: bold;">TOTAL</td>
+                    <td class="number">{total_debit:,.2f}</td>
+                    <td class="number">{total_credit:,.2f}</td>
+                    <td class="number"></td>
+                </tr>
+                <tr class="closing-row">
+                    <td colspan="3" style="text-align: right; font-weight: bold;">CLOSING BALANCE</td>
+                    <td class="number"></td>
+                    <td class="number"></td>
+                    <td class="number">{closing_balance:,.2f}</td>
+                </tr>
+    """
 
-#     html += f"""
-#             </tbody>
-#         </table>
+    html += f"""
+            </tbody>
+        </table>
         
-#         <div class="footer">
-#             <div class="footer-left">
-#                 Generated on {today()} | Method: {method_used} | Total Records: {len(data)}
-#             </div>
-#             <div class="footer-right">
-#                 Page 1 of 1
-#             </div>
-#         </div>
-#     </body>
-#     </html>
-#     """
+        <div class="footer">
+            <div class="footer-left">
+                Generated on {today()} | Method: {method_used} | Total Records: {len(data)}
+            </div>
+            <div class="footer-right">
+                Page 1 of 1
+            </div>
+        </div>
+    </body>
+    </html>
+    """
     
-#     frappe.logger().info(f"✓ Enhanced HTML generated successfully with {len(data)} rows using method: {method_used}")
-#     return html
+    frappe.logger().info(f"✓ Enhanced HTML generated successfully with {len(data)} rows using method: {method_used}")
+    return html
 
 
 @frappe.whitelist()
