@@ -155,6 +155,232 @@ def generate_and_store_gl_report(customer, customer_name, from_date, to_date, mo
     frappe.logger().info(f"Successfully generated GL report for {customer} - {month} {year}")
 
 
+# def get_general_ledger_html(filters, customer, customer_name, month, year):
+#     """
+#     Generate HTML content for General Ledger report
+#     Returns HTML with message if no data found
+#     """
+    
+#     # Fetch GL Data
+#     try:
+#         report = frappe.get_doc("Report", "General Ledger")
+#         execute_fn = frappe.get_attr(report.report_module + ".execute")
+#         columns, data = execute_fn(filters)
+#     except:
+#         columns, data = [], []
+
+#     # If no data, use direct SQL query
+#     if not data:
+#         opening_row = frappe.db.sql("""
+#             SELECT 
+#                 SUM(debit) AS opening_debit,
+#                 SUM(credit) AS opening_credit
+#             FROM `tabGL Entry`
+#             WHERE 
+#                 company = %(company)s
+#                 AND posting_date < %(from_date)s
+#                 AND party_type = 'Customer'
+#                 AND party = %(party)s
+#                 AND is_cancelled = 0
+#         """, {
+#             "company": filters["company"],
+#             "from_date": filters["from_date"],
+#             "party": customer
+#         }, as_dict=True)
+
+#         opening_balance = 0
+#         if opening_row and opening_row[0]:
+#             opening_balance = (opening_row[0].opening_debit or 0) - (opening_row[0].opening_credit or 0)
+
+#         gl_entries = frappe.db.sql("""
+#             SELECT 
+#                 posting_date,
+#                 CONCAT(voucher_type, ' - ', voucher_no) as reference,
+#                 remarks,
+#                 debit,
+#                 credit
+#             FROM `tabGL Entry`
+#             WHERE 
+#                 company = %(company)s
+#                 AND posting_date BETWEEN %(from_date)s AND %(to_date)s
+#                 AND party_type = 'Customer'
+#                 AND party = %(party)s
+#                 AND is_cancelled = 0
+#             ORDER BY posting_date
+#         """, {
+#             "company": filters["company"],
+#             "from_date": filters["from_date"],
+#             "to_date": filters["to_date"],
+#             "party": customer
+#         }, as_dict=True)
+
+#         columns = [
+#             {"label": "Date", "fieldname": "posting_date"},
+#             {"label": "Reference", "fieldname": "reference"},
+#             {"label": "Remarks", "fieldname": "remarks"},
+#             {"label": "Debit", "fieldname": "debit", "fieldtype": "Currency"},
+#             {"label": "Credit", "fieldname": "credit", "fieldtype": "Currency"},
+#             {"label": "Balance", "fieldname": "balance", "fieldtype": "Currency"}
+#         ]
+
+#         data = []
+#         balance = opening_balance
+
+#         for d in gl_entries:
+#             balance += (d.debit or 0) - (d.credit or 0)
+#             d.balance = balance
+#             data.append(d)
+
+#         total_debit = sum(d.debit or 0 for d in gl_entries)
+#         total_credit = sum(d.credit or 0 for d in gl_entries)
+#         total_balance = total_debit - total_credit
+#         closing_balance = opening_balance + total_balance
+#     else:
+#         # Use data from report
+#         opening_balance = 0
+#         total_debit = 0
+#         total_credit = 0
+#         for row in data:
+#             if isinstance(row, (list, tuple)):
+#                 # Find debit/credit indices
+#                 for i, col in enumerate(columns):
+#                     if col.get('fieldname') == 'debit':
+#                         total_debit += row[i] or 0
+#                     elif col.get('fieldname') == 'credit':
+#                         total_credit += row[i] or 0
+#         total_balance = total_debit - total_credit
+#         closing_balance = opening_balance + total_balance
+
+#     # BUILD HTML - REGARDLESS OF WHETHER DATA EXISTS
+
+#     letter_head_html = frappe.db.get_value(
+#         "Letter Head",
+#         "Bhaskar Office Letter Head",
+#         "content"
+#     ) or ""
+#     html = f"""
+#     <html>
+#     <head>
+#         <style>
+#             body {{
+#                 font-family: Arial, sans-serif;
+#                 font-size: 10pt;
+#                 margin: 20px;
+#             }}
+#             h1, h2 {{
+#                 text-align: center;
+#                 margin: 0;
+#                 padding: 0;
+#             }}
+#             .info {{
+#                 text-align: center;
+#                 font-size: 9pt;
+#                 margin-bottom: 15px;
+#             }}
+#             table {{
+#                 width: 100%;
+#                 border-collapse: collapse;
+#                 margin-top: 15px;
+#             }}
+#             th {{
+#                 background: #f0f0f0;
+#                 border: 1px solid #000;
+#                 padding: 6px;
+#                 text-align: left;
+#                 font-weight: bold;
+#             }}
+#             td {{
+#                 border: 1px solid #000;
+#                 padding: 6px;
+#                 vertical-align: top;
+#             }}
+#             .num {{
+#                 text-align: right;
+#             }}
+#             .total-row {{
+#                 font-weight: bold;
+#                 background: #fafafa;
+#             }}
+#             .no-data {{
+#                 text-align: center;
+#                 padding: 30px;
+#                 color: #999;
+#                 font-style: italic;
+#             }}
+#         </style>
+#     </head>
+#     <body>
+#     <div style="text-align: center; margin-bottom: 20px;">
+#     <div style="display: inline-block; text-align: center; width: 100%;">
+#         {letter_head_html}
+#     </div>
+# </div>
+
+    
+#         <h2>STATEMENTS OF ACCOUNTS</h2>
+#         <d>
+#     <strong>Customer:</strong> {customer} | 
+#     <strong>Customer Name:</strong> {customer_name} | 
+#     <strong>Date Range:</strong> {filters['from_date']} to {filters['to_date']}
+# </d>
+
+       
+#         <table>
+#             <tr>
+#                 <th>Opening Balance</th>
+#                 <td class="num">{opening_balance:,.2f}</td>
+#             </tr>
+#         </table>
+#     """
+
+#     # If no data, show message
+#     if not data:
+#         html += """
+#         <div class="no-data">
+#             No transactions found for this customer in the specified period.
+#         </div>
+#         """
+#     else:
+#         # Show data table
+#         html += "<table><thead><tr>"
+#         for col in columns:
+#             html += f"<th>{col['label']}</th>"
+#         html += "</tr></thead><tbody>"
+
+#         for row in data:
+#             html += "<tr>"
+#             for col in columns:
+#                 val = row.get(col["fieldname"], "") if isinstance(row, dict) else ""
+#                 if col.get("fieldtype") == "Currency":
+#                     val = f"{float(val or 0):,.2f}"
+#                     html += f"<td class='num'>{val}</td>"
+#                 else:
+#                     html += f"<td>{val}</td>"
+#             html += "</tr>"
+
+#         html += f"""
+#             <tr class="total-row">
+#                 <td colspan="{len(columns)-3}">Totals</td>
+#                 <td class="num">{total_debit:,.2f}</td>
+#                 <td class="num">{total_credit:,.2f}</td>
+#                 <td class="num">{total_balance:,.2f}</td>
+#             </tr>
+#         </tbody></table>
+#         """
+
+#     # Closing balance table
+#     html += f"""
+#         <table>
+#             <tr class="total-row">
+#                 <th>Closing Balance</th>
+#                 <td class="num">{closing_balance:,.2f}</td>
+#             </tr>
+#         </table>
+#     </body>
+#     </html>
+#     """
+
+#     return html
 def get_general_ledger_html(filters, customer, customer_name, month, year):
     """
     Generate HTML content for General Ledger report
@@ -242,7 +468,6 @@ def get_general_ledger_html(filters, customer, customer_name, month, year):
         total_credit = 0
         for row in data:
             if isinstance(row, (list, tuple)):
-                # Find debit/credit indices
                 for i, col in enumerate(columns):
                     if col.get('fieldname') == 'debit':
                         total_debit += row[i] or 0
@@ -251,49 +476,79 @@ def get_general_ledger_html(filters, customer, customer_name, month, year):
         total_balance = total_debit - total_credit
         closing_balance = opening_balance + total_balance
 
-    # BUILD HTML - REGARDLESS OF WHETHER DATA EXISTS
+    # BUILD HTML WITH FIXED COLUMN WIDTHS
 
     letter_head_html = frappe.db.get_value(
         "Letter Head",
         "Bhaskar Office Letter Head",
         "content"
     ) or ""
+    
     html = f"""
     <html>
     <head>
         <style>
+            @page {{
+                size: A4;
+                margin: 15mm;
+            }}
             body {{
                 font-family: Arial, sans-serif;
-                font-size: 10pt;
-                margin: 20px;
-            }}
-            h1, h2 {{
-                text-align: center;
+                font-size: 9pt;
                 margin: 0;
                 padding: 0;
             }}
+            h1, h2 {{
+                text-align: center;
+                margin: 5px 0;
+                padding: 0;
+                font-size: 14pt;
+            }}
             .info {{
                 text-align: center;
-                font-size: 9pt;
-                margin-bottom: 15px;
+                font-size: 8pt;
+                margin-bottom: 10px;
             }}
             table {{
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 15px;
+                margin-top: 10px;
+                table-layout: fixed; /* CRITICAL: Fixed layout prevents overflow */
             }}
             th {{
                 background: #f0f0f0;
                 border: 1px solid #000;
-                padding: 6px;
+                padding: 5px;
                 text-align: left;
                 font-weight: bold;
+                font-size: 8pt;
+                word-wrap: break-word;
             }}
             td {{
                 border: 1px solid #000;
-                padding: 6px;
+                padding: 5px;
                 vertical-align: top;
+                font-size: 8pt;
+                word-wrap: break-word; /* Allow text to wrap */
+                overflow-wrap: break-word; /* Break long words */
             }}
+            /* Fixed column widths to prevent overflow */
+            table.data-table {{
+                width: 100%;
+            }}
+            table.data-table th:nth-child(1),
+            table.data-table td:nth-child(1) {{ width: 10%; }} /* Date */
+            table.data-table th:nth-child(2),
+            table.data-table td:nth-child(2) {{ width: 20%; }} /* Reference */
+            table.data-table th:nth-child(3),
+            table.data-table td:nth-child(3) {{ width: 30%; }} /* Remarks */
+            table.data-table th:nth-child(4),
+            table.data-table td:nth-child(4) {{ width: 13%; }} /* Debit */
+            table.data-table th:nth-child(5),
+            table.data-table td:nth-child(5) {{ width: 13%; }} /* Credit */
+            table.data-table th:nth-child(6),
+            table.data-table td:nth-child(6) {{ width: 14%; }} /* Balance */
+            
             .num {{
                 text-align: right;
             }}
@@ -307,25 +562,35 @@ def get_general_ledger_html(filters, customer, customer_name, month, year):
                 color: #999;
                 font-style: italic;
             }}
+            /* Balance tables */
+            table.balance-table {{
+                width: 50%;
+                margin-left: auto;
+                margin-right: auto;
+            }}
+            table.balance-table th {{
+                width: 60%;
+            }}
+            table.balance-table td {{
+                width: 40%;
+            }}
         </style>
     </head>
     <body>
-    <div style="text-align: center; margin-bottom: 20px;">
-    <div style="display: inline-block; text-align: center; width: 100%;">
-        {letter_head_html}
-    </div>
-</div>
-
-    
+        <div style="text-align: center; margin-bottom: 15px;">
+            <div style="display: inline-block; text-align: center; width: 100%;">
+                {letter_head_html}
+            </div>
+        </div>
+        
         <h2>STATEMENTS OF ACCOUNTS</h2>
-        <d>
-    <strong>Customer:</strong> {customer} | 
-    <strong>Customer Name:</strong> {customer_name} | 
-    <strong>Date Range:</strong> {filters['from_date']} to {filters['to_date']}
-</d>
-
+        <div class="info">
+            <strong>Customer:</strong> {customer} | 
+            <strong>Customer Name:</strong> {customer_name} | 
+            <strong>Date Range:</strong> {filters['from_date']} to {filters['to_date']}
+        </div>
        
-        <table>
+        <table class="balance-table">
             <tr>
                 <th>Opening Balance</th>
                 <td class="num">{opening_balance:,.2f}</td>
@@ -341,8 +606,8 @@ def get_general_ledger_html(filters, customer, customer_name, month, year):
         </div>
         """
     else:
-        # Show data table
-        html += "<table><thead><tr>"
+        # Show data table with fixed widths
+        html += '<table class="data-table"><thead><tr>'
         for col in columns:
             html += f"<th>{col['label']}</th>"
         html += "</tr></thead><tbody>"
@@ -355,12 +620,17 @@ def get_general_ledger_html(filters, customer, customer_name, month, year):
                     val = f"{float(val or 0):,.2f}"
                     html += f"<td class='num'>{val}</td>"
                 else:
-                    html += f"<td>{val}</td>"
+                    # Truncate very long text to prevent overflow
+                    val_str = str(val) if val else ""
+                    html += f"<td>{val_str}</td>"
             html += "</tr>"
 
+        # Calculate colspan for totals row
+        colspan = len(columns) - 3
+        
         html += f"""
             <tr class="total-row">
-                <td colspan="{len(columns)-3}">Totals</td>
+                <td colspan="{colspan}">Totals</td>
                 <td class="num">{total_debit:,.2f}</td>
                 <td class="num">{total_credit:,.2f}</td>
                 <td class="num">{total_balance:,.2f}</td>
@@ -370,7 +640,7 @@ def get_general_ledger_html(filters, customer, customer_name, month, year):
 
     # Closing balance table
     html += f"""
-        <table>
+        <table class="balance-table">
             <tr class="total-row">
                 <th>Closing Balance</th>
                 <td class="num">{closing_balance:,.2f}</td>
@@ -381,298 +651,6 @@ def get_general_ledger_html(filters, customer, customer_name, month, year):
     """
 
     return html
-# def generate_and_store_gl_report(customer, customer_name, from_date, to_date, month, year):
-#     """
-#     Generate General Ledger report for a specific customer and store it
-#     """
-    
-#     frappe.logger().info(f"Generating report for {customer_name} ({customer})")
-#     frappe.logger().info(f"Date Range: {from_date} to {to_date}")
-
-#     # Check if report already exists for this customer and month - FIXED
-#     existing_report = frappe.db.exists(
-#         "General Ledger Report List",
-#         {"customer": customer, "month": month}
-#     )
-
-#     if existing_report:
-#         frappe.logger().info(f"Report already exists for {customer} - {month} {year}")
-#         return
-
-#     company = frappe.defaults.get_user_default("Company")
-#     if not company:
-#         # Try to get first active company
-#         company = frappe.get_all("Company", filters={"disabled": 0}, limit=1, pluck="name")
-#         if company:
-#             company = company[0]
-#         else:
-#             frappe.throw(_("No active Company found"))
-
-#     frappe.logger().info(f"Using company: {company}")
-
-#     # Prepare filters for General Ledger report
-#     filters = {
-#         "company": company,
-#         "from_date": from_date,
-#         "to_date": to_date,
-#         "party_type": "Customer",
-#         "party": [customer],  # Note: Some ERPNext versions expect a list
-#         "group_by": "Group by Voucher (Consolidated)",
-#         "include_dimensions": 1,
-#         "show_opening_entries": 1,
-#         "show_cancelled_entries": 0,
-#         "show_net_values_in_party_account": 0
-#     }
-
-#     # Generate the report HTML
-#     report_html = get_general_ledger_html(filters, customer, customer_name, month, year)
-
-#     # Convert HTML to PDF
-#     pdf_data = get_pdf(report_html)
-
-#     # Create new General Ledger Report List document
-#     gl_report_doc = frappe.get_doc({
-#         "doctype": "General Ledger Report List",
-#         "customer": customer,
-#         "month": month
-#     })
-
-#     gl_report_doc.insert(ignore_permissions=True)
-
-#     # Attach the PDF file
-#     file_name = f"GL_Report_{customer}_{month}_{year}.pdf"
-#     file_doc = frappe.get_doc({
-#         "doctype": "File",
-#         "file_name": file_name,
-#         "attached_to_doctype": "General Ledger Report List",
-#         "attached_to_name": gl_report_doc.name,
-#         "attached_to_field": "general_ledger_report",
-#         "is_private": 1,
-#         "content": pdf_data
-#     })
-#     file_doc.save(ignore_permissions=True)
-
-#     # Update the document with file URL
-#     gl_report_doc.general_ledger_report = file_doc.file_url
-#     gl_report_doc.save(ignore_permissions=True)
-
-#     frappe.logger().info(f"Successfully generated GL report for {customer} - {month} {year}")
-
-
-
-# def get_general_ledger_html(filters, customer, customer_name, month, year):
-#     """
-#     Generate HTML content for General Ledger report with:
-#     - Opening balance
-#     - Total Debit / Total Credit
-#     - Closing Balance (Opening + Total)
-#     - Perfectly aligned PDF table
-#     """
-
-#     # ------------------------------
-#     # Fetch GL Data using report runner
-#     # ------------------------------
-#     try:
-#         report = frappe.get_doc("Report", "General Ledger")
-#         execute_fn = frappe.get_attr(report.report_module + ".execute")
-#         columns, data = execute_fn(filters)
-#     except:
-#         columns, data = [], []
-
-#     # ------------------------------
-#     # If no data → fallback to direct SQL query
-#     # ------------------------------
-#     if not data:
-#         # Opening Balance
-#         opening_row = frappe.db.sql("""
-#             SELECT 
-#                 SUM(debit) AS opening_debit,
-#                 SUM(credit) AS opening_credit
-#             FROM `tabGL Entry`
-#             WHERE 
-#                 company = %(company)s
-#                 AND posting_date < %(from_date)s
-#                 AND party_type = 'Customer'
-#                 AND party = %(party)s
-#                 AND is_cancelled = 0
-#         """, {
-#             "company": filters["company"],
-#             "from_date": filters["from_date"],
-#             "party": customer
-#         }, as_dict=True)[0]
-
-#         opening_balance = (opening_row.opening_debit or 0) - (opening_row.opening_credit or 0)
-
-#         # Current Period Entries
-#         gl_entries = frappe.db.sql("""
-#             SELECT 
-#                 posting_date,
-#                 voucher_type,
-#                 voucher_no,
-#                 remarks,
-#                 debit,
-#                 credit
-#             FROM `tabGL Entry`
-#             WHERE 
-#                 company = %(company)s
-#                 AND posting_date BETWEEN %(from_date)s AND %(to_date)s
-#                 AND party_type = 'Customer'
-#                 AND party = %(party)s
-#                 AND is_cancelled = 0
-#             ORDER BY posting_date
-#         """, {
-#             "company": filters["company"],
-#             "from_date": filters["from_date"],
-#             "to_date": filters["to_date"],
-#             "party": customer
-#         }, as_dict=True)
-
-#         columns = [
-#             {"label": "Posting Date", "fieldname": "posting_date"},
-#             {"label": "Voucher Type", "fieldname": "voucher_type"},
-#             {"label": "Voucher No", "fieldname": "voucher_no"},
-#             {"label": "Remarks", "fieldname": "remarks"},
-#             {"label": "Debit", "fieldname": "debit", "fieldtype": "Currency"},
-#             {"label": "Credit", "fieldname": "credit", "fieldtype": "Currency"},
-#             {"label": "Running Balance", "fieldname": "balance", "fieldtype": "Currency"}
-#         ]
-
-#         data = []
-#         balance = opening_balance
-
-#         for d in gl_entries:
-#             balance += (d.debit or 0) - (d.credit or 0)
-#             d.balance = balance
-#             data.append(d)
-
-#         # Totals
-#         total_debit = sum(d.debit or 0 for d in gl_entries)
-#         total_credit = sum(d.credit or 0 for d in gl_entries)
-#         total_balance = total_debit - total_credit
-#         closing_balance = opening_balance + total_balance
-
-#     else:
-#         # ERPNext GL already generates opening row & totals
-#         opening_balance = 0
-#         total_debit = sum(r[columns.index({"fieldname": "debit"})] for r in data if isinstance(r, list))
-#         total_credit = sum(r[columns.index({"fieldname": "credit"})] for r in data if isinstance(r, list))
-#         total_balance = total_debit - total_credit
-#         closing_balance = opening_balance + total_balance
-
-#     # ------------------------------------------------------------
-#     # Build perfectly aligned PDF-ready HTML
-#     # ------------------------------------------------------------
-#     html = f"""
-#     <html>
-#     <head>
-#         <style>
-#             body {{
-#                 font-family: Arial, sans-serif;
-#                 font-size: 10pt;
-#                 margin: 20px;
-#             }}
-#             h1, h2 {{
-#                 text-align: center;
-#                 margin: 0;
-#                 padding: 0;
-#             }}
-#             .info {{
-#                 text-align: center;
-#                 font-size: 9pt;
-#                 margin-bottom: 15px;
-#             }}
-#             table {{
-#                 width: 100%;
-#                 border-collapse: collapse;
-#                 margin-top: 15px;
-#                 table-layout: fixed;
-#             }}
-#             th {{
-#                 background: #f0f0f0;
-#                 border: 1px solid #000;
-#                 padding: 6px;
-#                 text-align: left;
-#                 font-weight: bold;
-#             }}
-#             td {{
-#                 border: 1px solid #000;
-#                 padding: 6px;
-#                 vertical-align: top;
-#                 word-wrap: break-word;
-#             }}
-#             .num {{
-#                 text-align: right;
-#             }}
-#             .total-row {{
-#                 font-weight: bold;
-#                 background: #fafafa;
-#             }}
-#         </style>
-#     </head>
-
-#     <body>
-#         <h1>General Ledger Report</h1>
-#         <h2>{customer_name}</h2>
-#         <div class="info">{month} {year} | {filters['from_date']} to {filters['to_date']}</div>
-
-#         <table>
-#             <tr>
-#                 <th>Opening Balance</th>
-#                 <td class="num">{opening_balance:,.2f}</td>
-#             </tr>
-#         </table>
-
-#         <table>
-#             <thead>
-#                 <tr>
-#     """
-
-#     # Add column headers
-#     for col in columns:
-#         html += f"<th>{col['label']}</th>"
-
-#     html += "</tr></thead><tbody>"
-
-#     # Table data rows
-#     for row in data:
-#         html += "<tr>"
-#         for col in columns:
-#             val = row.get(col["fieldname"], "")
-
-#             if col.get("fieldtype") == "Currency":
-#                 val = f"{float(val or 0):,.2f}"
-#                 html += f"<td class='num'>{val}</td>"
-#             else:
-#                 html += f"<td>{val}</td>"
-#         html += "</tr>"
-
-#     # Totals Row
-#     html += f"""
-#         <tr class="total-row">
-#             <td colspan="{len(columns)-3}">Totals</td>
-#             <td class="num">{total_debit:,.2f}</td>
-#             <td class="num">{total_credit:,.2f}</td>
-#             <td class="num">{total_balance:,.2f}</td>
-#         </tr>
-#     """
-
-#     # Closing Balance
-#     html += f"""
-#         <tr class="total-row">
-#             <td colspan="{len(columns)-1}">Closing Balance</td>
-#             <td class="num">{closing_balance:,.2f}</td>
-#         </tr>
-#     """
-
-#     html += """
-#             </tbody>
-#         </table>
-#     </body>
-#     </html>
-#     """
-
-#     return html
-
 
 
 @frappe.whitelist()
