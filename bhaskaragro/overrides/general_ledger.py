@@ -55,13 +55,17 @@ def custom_execute(filters=None):
 		voucher_type = row.get("voucher_type")
 		voucher_no = row.get("voucher_no")
 
-		if voucher_type == "Journal Entry":
+		voucher_subtype = row.get("voucher_subtype")
+
+		if voucher_type == "Sales Invoice" and voucher_subtype == "Credit Note":
+			row["voucher_subtype"] = "Sales Return Credit Note"
+		elif voucher_type == "Journal Entry" and voucher_subtype == "Credit Note":
 			row["voucher_subtype"] = "Discount Credit Note"
+
+		if voucher_type == "Journal Entry":
 			ref_no = je_ref_map.get(voucher_no)
 			if ref_no:
 				row["remarks"] = ref_no
-		elif voucher_type == "Credit Note":
-			row["voucher_subtype"] = "Sales Return Credit Note"
 		elif voucher_type == "Payment Entry":
 			ref_no = pe_ref_map.get(voucher_no)
 			if ref_no:
